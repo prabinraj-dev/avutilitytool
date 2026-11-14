@@ -21,23 +21,33 @@
     powerOn: 'Power on sent', powerOff: 'Power off sent', volumeUp: 'Volume up sent', volumeDown: 'Volume down sent', mute: 'Mute sent',
   };
 
+  const DEFAULT_LABELS = { powerOn: 'Power on', powerOff: 'Power off', mute: 'Mute' };
+  const RENAMEABLE = Object.keys(DEFAULT_LABELS);
+  const DEFAULT_SOURCES = ['HDMI 1', 'HDMI 2', 'HDMI 3', 'PC', 'Wireless Display', 'USB-C'];
+  const DEFAULT_CUSTOM_COUNT = 12;
+
   const defaultMapping = () => ({
-    powerOn: emptyCommand(),
-    powerOff: emptyCommand(),
+    powerOn: { label: DEFAULT_LABELS.powerOn, ...emptyCommand() },
+    powerOff: { label: DEFAULT_LABELS.powerOff, ...emptyCommand() },
     volumeUp: emptyCommand(),
     volumeDown: emptyCommand(),
-    mute: emptyCommand(),
+    mute: { label: DEFAULT_LABELS.mute, ...emptyCommand() },
     volumeSet: emptyCommand(),
-    sources: ['HDMI 1', 'HDMI 2', 'PC', 'Wireless Display'].map((label) => ({ label, ...emptyCommand() })),
+    sources: DEFAULT_SOURCES.map((label) => ({ label, ...emptyCommand() })),
+    custom: Array.from({ length: DEFAULT_CUSTOM_COUNT }, (_, i) => ({ label: `Button ${i + 1}`, ...emptyCommand() })),
   });
 
-  // Mappings saved by older versions lack the power keys -- fill in anything missing.
+  // Mappings saved by older versions lack newer keys -- fill in anything missing.
   function normalizeMapping(saved) {
     const out = defaultMapping();
     if (!saved) return out;
-    SINGLE_KEYS.forEach((k) => { out[k] = { ...emptyCommand(), ...(saved[k] || {}) }; });
+    SINGLE_KEYS.forEach((k) => { out[k] = { ...out[k], ...(saved[k] || {}) }; });
+    RENAMEABLE.forEach((k) => { if (!out[k].label || !out[k].label.trim()) out[k].label = DEFAULT_LABELS[k]; });
     if (Array.isArray(saved.sources)) {
       out.sources = saved.sources.map((s) => ({ label: 'Source', ...emptyCommand(), ...s }));
+    }
+    if (Array.isArray(saved.custom)) {
+      out.custom = saved.custom.map((s) => ({ label: 'Button', ...emptyCommand(), ...s }));
     }
     return out;
   }
@@ -45,6 +55,7 @@
   let currentDeviceId = null;
   let currentMapping = defaultMapping();
   let deviceSignature = '';
+  let editMode = false;
 
   const hasCommand = (cmd) => !!(cmd && cmd.payload && cmd.payload.trim());
 
@@ -58,28 +69,46 @@
 
   async function sendCommand(command, successLabel) {
     if (!currentDeviceId) { showFeedback('Select a device first', true); return; }
-    if (!hasCommand(command)) { showFeedback('No command mapped to this button yet \u2014 open \u201CEdit command mapping\u201D', true); return; }
+    if (!hasCommand(command)) { showFeedback('No command saved for this button yet', true); return; }
     const result = await window.api.control.trigger(currentDeviceId, command);
     if (result.success) showFeedback(successLabel, false);
     else showFeedback(result.error || 'Send failed', true);
   }
 
+  // A button either sends its command or, in edit mode / when it has no command yet,
+  // opens its editor. Right-click always opens the editor.
+  // ref: { kind: 'key', key } | { kind: 'sources' | 'custom', index }
+  function getCommand(ref) {
+    return ref.kind === 'key' ? currentMapping[ref.key] : currentMapping[ref.kind][ref.index];
+  }
+
+  function activate(ref, successLabel) {
+    if (!currentDeviceId) { showFeedback('Select a device first', true); return; }
+    const command = getCommand(ref);
+    if (editMode || !hasCommand(command)) { openButtonEditor(ref); return; }
+    sendCommand(command, successLabel);
+  }
+
   // ---------- rendering ----------
-  function renderSourceButtons() {
-    const wrap = $('sourceButtons');
+  function renderList(kind, wrapId, emptyText, feedback) {
+    const wrap = $(wrapId);
     const enabled = !!currentDeviceId;
-    if (!currentMapping.sources.length) {
-      wrap.innerHTML = '<p class="empty-hint">No sources yet. Use \u201CEdit command mapping\u201D to add some.</p>';
-      return;
-    }
-    wrap.innerHTML = currentMapping.sources.map((s, i) => `
-      <button type="button" class="btn btn-source ${hasCommand(s) ? '' : 'is-unmapped'}" data-index="${i}" ${enabled ? '' : 'disabled'}>${esc(s.label)}</button>
+    const items = currentMapping[kind];
+    const buttons = items.map((s, i) => `
+      <button type="button" class="btn btn-source ${hasCommand(s) ? '' : 'is-unmapped'}" data-index="${i}" title="Right-click to edit" ${enabled ? '' : 'disabled'}>${esc(s.label)}</button>
     `).join('');
+    const add = `<button type="button" class="btn btn-ghost btn-add" ${enabled ? '' : 'disabled'}>+ Add button</button>`;
+    wrap.innerHTML = (items.length ? buttons : `<p class="empty-hint">${emptyText}</p>`) + add;
     wrap.querySelectorAll('.btn-source').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const source = currentMapping.sources[Number(btn.dataset.index)];
-        sendCommand(source, `Switched to ${source.label}`);
-      });
+      const ref = { kind, index: Number(btn.dataset.index) };
+      btn.addEventListener('click', () => activate(ref, feedback(currentMapping[kind][ref.index].label)));
+      btn.addEventListener('contextmenu', (e) => { e.preventDefault(); if (currentDeviceId) openButtonEditor(ref); });
+    });
+    wrap.querySelector('.btn-add').addEventListener('click', async () => {
+      const label = kind === 'sources' ? `Source ${items.length + 1}` : `Button ${items.length + 1}`;
+      items.push({ label, ...emptyCommand() });
+      await saveMapping();
+      openButtonEditor({ kind, index: items.length - 1 });
     });
   }
 
@@ -89,12 +118,24 @@
       const btn = $(id);
       btn.disabled = !enabled;
       btn.classList.toggle('is-unmapped', !hasCommand(currentMapping[key]));
+      if (RENAMEABLE.includes(key)) btn.textContent = currentMapping[key].label || DEFAULT_LABELS[key];
     });
     $('volSlider').disabled = !enabled;
     $('volSlider').classList.toggle('is-unmapped', !hasCommand(currentMapping.volumeSet));
     $('openMappingBtn').disabled = !enabled;
+    $('editModeBtn').disabled = !enabled;
+    $('editModeBtn').setAttribute('aria-pressed', String(editMode));
+    $('editModeBtn').textContent = editMode ? 'Done editing' : 'Edit buttons';
+    $('tab-control').classList.toggle('is-editing', editMode);
     $('controlEmpty').classList.toggle('hidden', enabled);
-    renderSourceButtons();
+    renderList('sources', 'sourceButtons', 'No sources yet.', (label) => `Switched to ${label}`);
+    renderList('custom', 'customButtons', 'No custom buttons yet.', (label) => `${label} sent`);
+  }
+
+  async function saveMapping() {
+    if (!currentDeviceId) return;
+    await window.api.mappings.set(currentDeviceId, currentMapping);
+    renderControls();
   }
 
   function updateStatusBadge(devices) {
@@ -174,7 +215,19 @@
   }
 
   function groupHtml(draft, keys, title) {
-    return `<h3>${title}</h3>${keys.map((k) => commandFields(k, draft[k], `<span class="mapping-label">${esc(KEY_LABELS[k])}</span>`)).join('')}`;
+    return `<h3>${title}</h3>${keys.map((k) => `
+      ${RENAMEABLE.includes(k) ? `<label class="mapping-name">Button name (${esc(KEY_LABELS[k])})<input type="text" name="${k}_label" value="${esc(draft[k].label || '')}" /></label>` : ''}
+      ${commandFields(k, draft[k], `<span class="mapping-label">${esc(KEY_LABELS[k])}</span>`)}`).join('')}`;
+  }
+
+  function listHtml(draft, kind, title, noun) {
+    return `<h3>${title} <button type="button" class="btn btn-ghost btn-sm add-row" data-kind="${kind}">+ Add ${noun}</button></h3>
+      ${draft[kind].map((s, i) => `
+        <div class="mapping-row-wrap">
+          <label>Button name<input type="text" name="${kind}_${i}_label" value="${esc(s.label)}" /></label>
+          ${commandFields(`${kind}_${i}`, s)}
+          <button type="button" class="btn btn-ghost btn-sm remove-row" data-kind="${kind}" data-index="${i}">Remove ${noun}</button>
+        </div>`).join('')}`;
   }
 
   function buildModalHtml(draft) {
@@ -188,13 +241,8 @@
           <form id="mappingForm" class="modal-body">
             ${groupHtml(draft, ['powerOn', 'powerOff'], 'Power')}
             ${groupHtml(draft, ['volumeUp', 'volumeDown', 'mute', 'volumeSet'], 'Volume &amp; mute')}
-            <h3>Sources <button type="button" id="addSourceRow" class="btn btn-ghost btn-sm">+ Add source</button></h3>
-            ${draft.sources.map((s, i) => `
-              <div class="mapping-row-wrap">
-                <label>Button label<input type="text" name="source_${i}_label" value="${esc(s.label)}" /></label>
-                ${commandFields(`source_${i}`, s)}
-                <button type="button" class="btn btn-ghost btn-sm remove-source" data-index="${i}">Remove source</button>
-              </div>`).join('')}
+            ${listHtml(draft, 'sources', 'Sources', 'source')}
+            ${listHtml(draft, 'custom', 'Custom buttons', 'button')}
             <div class="modal-actions"><button type="submit" class="btn btn-primary">Save mapping</button></div>
           </form>
         </div>
@@ -214,10 +262,15 @@
   // Copies what's typed in the form into the draft (so adding/removing a row
   // never throws away edits you haven't saved yet).
   function collect(form, draft) {
-    SINGLE_KEYS.forEach((k) => { draft[k] = readCommand(form, k); });
-    draft.sources.forEach((s, i) => {
-      s.label = form.elements[`source_${i}_label`].value || `Source ${i + 1}`;
-      Object.assign(s, readCommand(form, `source_${i}`));
+    SINGLE_KEYS.forEach((k) => {
+      draft[k] = { ...draft[k], ...readCommand(form, k) };
+      if (RENAMEABLE.includes(k)) draft[k].label = form.elements[`${k}_label`].value.trim() || DEFAULT_LABELS[k];
+    });
+    ['sources', 'custom'].forEach((kind) => {
+      draft[kind].forEach((s, i) => {
+        s.label = form.elements[`${kind}_${i}_label`].value.trim() || `${kind === 'sources' ? 'Source' : 'Button'} ${i + 1}`;
+        Object.assign(s, readCommand(form, `${kind}_${i}`));
+      });
     });
   }
 
@@ -240,15 +293,18 @@
       if (e.target.classList.contains('modal-backdrop')) closeModal();
     });
 
-    root.querySelector('#addSourceRow').addEventListener('click', () => {
-      collect(form, draft);
-      draft.sources.push({ label: 'New source', ...emptyCommand() });
-      openMappingModal(draft);
-    });
-    root.querySelectorAll('.remove-source').forEach((btn) => {
+    root.querySelectorAll('.add-row').forEach((btn) => {
       btn.addEventListener('click', () => {
         collect(form, draft);
-        draft.sources.splice(Number(btn.dataset.index), 1);
+        const kind = btn.dataset.kind;
+        draft[kind].push({ label: kind === 'sources' ? 'New source' : 'New button', ...emptyCommand() });
+        openMappingModal(draft);
+      });
+    });
+    root.querySelectorAll('.remove-row').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        collect(form, draft);
+        draft[btn.dataset.kind].splice(Number(btn.dataset.index), 1);
         openMappingModal(draft);
       });
     });
@@ -264,6 +320,68 @@
     });
   }
 
+  // ---------- single-button editor (name + command, saved for the selected device) ----------
+  function openButtonEditor(ref) {
+    if (!currentDeviceId) { showFeedback('Select a device first', true); return; }
+    const deviceId = currentDeviceId;
+    const command = getCommand(ref);
+    const isList = ref.kind !== 'key';
+    const canRename = isList || RENAMEABLE.includes(ref.key);
+    const device = AppState.devices.find((d) => d.id === deviceId);
+    const title = canRename ? (command.label || 'Button') : KEY_LABELS[ref.key];
+    const root = $('modalRoot');
+    root.innerHTML = `
+      <div class="modal-backdrop">
+        <div class="modal modal-narrow" role="dialog" aria-label="Edit button">
+          <div class="modal-header">
+            <h2>Edit button \u2014 ${esc(title)}</h2>
+            <button type="button" class="modal-close btn btn-ghost btn-sm">Close</button>
+          </div>
+          <form id="buttonForm" class="modal-body">
+            <p class="dt-hint">Saved for <strong>${esc(device ? device.name : 'this device')}</strong> only. Other devices keep their own names and commands.</p>
+            ${canRename ? `<label>Button name<input type="text" name="btn_label" value="${esc(command.label || '')}" maxlength="40" /></label>` : ''}
+            ${commandFields('btn', command)}
+            ${ref.kind === 'key' && ref.key === 'volumeSet' ? '<p class="dt-hint">Use <span class="mono">{value}</span> where the slider value (0\u2013100) should go.</p>' : ''}
+            <div class="modal-actions modal-actions-split">
+              ${isList ? '<button type="button" class="btn btn-ghost" id="buttonRemove">Remove button</button>' : '<span></span>'}
+              <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>`;
+    document.addEventListener('keydown', onEsc);
+    const form = root.querySelector('#buttonForm');
+    root.querySelector('.modal-close').addEventListener('click', closeModal);
+    root.querySelector('.modal-backdrop').addEventListener('mousedown', (e) => {
+      if (e.target.classList.contains('modal-backdrop')) closeModal();
+    });
+    const first = form.elements.btn_label || form.elements.btn_payload;
+    first.focus(); first.select();
+
+    if (isList) {
+      root.querySelector('#buttonRemove').addEventListener('click', async () => {
+        if (deviceId !== currentDeviceId) { closeModal(); return; }
+        currentMapping[ref.kind].splice(ref.index, 1);
+        await saveMapping();
+        closeModal();
+        showFeedback('Button removed', false);
+      });
+    }
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (deviceId !== currentDeviceId) { closeModal(); return; }
+      const target = getCommand(ref);
+      Object.assign(target, readCommand(form, 'btn'));
+      if (canRename) {
+        const fallback = isList ? (ref.kind === 'sources' ? `Source ${ref.index + 1}` : `Button ${ref.index + 1}`) : DEFAULT_LABELS[ref.key];
+        target.label = form.elements.btn_label.value.trim() || fallback;
+      }
+      await saveMapping();
+      closeModal();
+      showFeedback(`Saved for ${device ? device.name : 'this device'}`, false);
+    });
+  }
+
   // ---------- init ----------
   function init() {
     AppState.onDevicesChange(syncDevices);
@@ -276,14 +394,20 @@
     });
     $('openMappingBtn').addEventListener('click', () => openMappingModal());
 
+    $('editModeBtn').addEventListener('click', () => { editMode = !editMode; renderControls(); });
+
     Object.entries(BUTTONS).forEach(([id, key]) => {
-      $(id).addEventListener('click', () => sendCommand(currentMapping[key], FEEDBACK[key]));
+      const ref = { kind: 'key', key };
+      const feedback = () => (RENAMEABLE.includes(key) ? `${currentMapping[key].label} sent` : FEEDBACK[key]);
+      $(id).addEventListener('click', () => activate(ref, feedback()));
+      $(id).addEventListener('contextmenu', (e) => { e.preventDefault(); if (currentDeviceId) openButtonEditor(ref); });
     });
+    $('volSlider').addEventListener('contextmenu', (e) => { e.preventDefault(); if (currentDeviceId) openButtonEditor({ kind: 'key', key: 'volumeSet' }); });
 
     const slider = $('volSlider');
     slider.addEventListener('change', () => {
       const cmd = currentMapping.volumeSet;
-      if (!hasCommand(cmd)) { showFeedback('No volume-set command mapped yet', true); return; }
+      if (editMode || !hasCommand(cmd)) { if (currentDeviceId) openButtonEditor({ kind: 'key', key: 'volumeSet' }); return; }
       sendCommand({ ...cmd, payload: cmd.payload.replace(/\{value\}/g, slider.value) }, `Volume set to ${slider.value}`);
     });
   }

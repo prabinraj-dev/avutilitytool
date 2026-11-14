@@ -265,13 +265,14 @@
       <section id="tab-control" class="tab">
         <header class="tab-header">
           <h1>Control</h1>
-          <p class="tab-sub">Daily operation. Buttons with a dashed outline have no command yet &mdash; set them in &ldquo;Edit command mapping&rdquo;.</p>
+          <p class="tab-sub">Daily operation. Buttons with a dashed outline have no command yet &mdash; click one to set its name and command. Right-click any button to edit it. Everything is saved per device.</p>
         </header>
 
         <div class="panel control-toolbar">
           <label>Device<select id="controlDevice"></select></label>
           <span class="badge badge-idle" id="controlStatus"><i></i><span>No device</span></span>
-          <button id="openMappingBtn" class="btn btn-secondary">Edit command mapping</button>
+          <button id="editModeBtn" class="btn btn-secondary" type="button" aria-pressed="false">Edit buttons</button>
+          <button id="openMappingBtn" class="btn btn-ghost">Edit all commands</button>
         </div>
 
         <div id="controlEmpty" class="control-empty hidden">No device selected. Add one on the Devices tab, then pick it above. The controls below stay visible so you can see the layout.</div>
@@ -298,6 +299,11 @@
           <div class="panel control-card control-wide">
             <h2 class="panel-title">Source</h2>
             <div id="sourceButtons" class="source-grid"></div>
+          </div>
+
+          <div class="panel control-card control-wide">
+            <h2 class="panel-title">Custom buttons</h2>
+            <div id="customButtons" class="source-grid"></div>
           </div>
         </div>
 
