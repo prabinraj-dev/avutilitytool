@@ -106,6 +106,6 @@ renderer/               UI: index.html, styles.css, app.js, devices.js, console.
 
 ## Publishing updates
 
-Pushing to the `main` branch is publishing. GitHub Actions (`.github/workflows/release.yml`) builds the Windows installer, numbers it automatically (`0.4.<run number>`), and publishes it to GitHub Releases. Installed copies check every hour, download the new version in the background and install it when the app is closed (or straight away with "Restart now"). To change the major or minor number, edit `version` in `package.json`.
+Pushing to the `AV-Code` branch is publishing. GitHub Actions (`.github/workflows/release.yml`) builds the Windows installer, numbers it automatically (`0.4.<run number>`), and publishes it to GitHub Releases. Installed copies check every hour, download the new version in the background and install it when the app is closed (or straight away with "Restart now"). To change the major or minor number, edit `version` in `package.json`.
 
 The repository must stay public so installed apps can read its releases.

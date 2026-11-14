@@ -1,13 +1,13 @@
 name: Publish
 
-# Every push to main builds the Windows installer and publishes it as a new
+# Every push to the AV-Code branch builds the Windows installer and publishes it as a new
 # GitHub Release. Installed copies of the app find it within the hour and
 # update themselves. No version bump or tag is needed: the patch number
 # is the workflow run number, so each publish is automatically newer.
 # (Pushing a tag like v1.0.0 publishes exactly that version instead.)
 on:
   push:
-    branches: [main]
+    branches: [AV-Code]
     paths-ignore:
       - '**.md'
     tags:
