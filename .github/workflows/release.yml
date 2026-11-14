@@ -1,15 +1,25 @@
-name: Release
+name: Publish
 
-# Pushing a tag like v0.3.1 (npm run release does this) builds the Windows installer
-# and publishes it to GitHub Releases. Installed copies of the app then update themselves.
+# Every push to main builds the Windows installer and publishes it as a new
+# GitHub Release. Installed copies of the app find it within the hour and
+# update themselves. No version bump or tag is needed: the patch number
+# is the workflow run number, so each publish is automatically newer.
+# (Pushing a tag like v1.0.0 publishes exactly that version instead.)
 on:
   push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
     tags:
       - 'v*'
-  workflow_dispatch: # "Run workflow" button: builds the version in package.json and publishes it
+  workflow_dispatch: # "Run workflow" button
 
 permissions:
   contents: write
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
 
 jobs:
   release:
@@ -22,14 +32,17 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Check tag matches package.json version
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Choose the version number
         shell: bash
         run: |
-          PKG="v$(node -p "require('./package.json').version")"
-          if [ "$PKG" != "$GITHUB_REF_NAME" ]; then
-            echo "Tag $GITHUB_REF_NAME does not match package.json version $PKG"; exit 1
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            BASE=$(node -p "require('./package.json').version.split('.').slice(0,2).join('.')")
+            VERSION="$BASE.${{ github.run_number }}"
           fi
+          echo "Publishing version $VERSION"
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
 
       - run: npm ci
 

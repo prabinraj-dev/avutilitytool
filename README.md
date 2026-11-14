@@ -104,19 +104,8 @@ renderer/               UI: index.html, styles.css, app.js, devices.js, console.
 
 - **Automatic updates.** The app checks GitHub Releases at start and every hour, downloads new versions in the background, and installs them when you close it. A banner offers "Restart now" if you don't want to wait. Devices, mappings and settings are kept.
 
-## Publishing updates (one-time setup, then one command)
+## Publishing updates
 
-1. Create a **public** GitHub repository (for example `yourname/av-control-utility`) and push this folder to it.
-2. Run `node scripts/configure-updates.js yourname/av-control-utility` and commit the result. This tells the app which repository to check.
-3. Build and install the 0.3.0 installer once on each PC (older installs cannot self-update).
+Pushing to the `main` branch is publishing. GitHub Actions (`.github/workflows/release.yml`) builds the Windows installer, numbers it automatically (`0.4.<run number>`), and publishes it to GitHub Releases. Installed copies check every hour, download the new version in the background and install it when the app is closed (or straight away with "Restart now"). To change the major or minor number, edit `version` in `package.json`.
 
-From then on, to ship a change:
-
-```
-npm run release            # patch bump, e.g. 0.3.0 -> 0.3.1
-npm run release -- minor   # 0.3.0 -> 0.4.0
-```
-
-This commits your changes, bumps the version, tags it and pushes. GitHub Actions (`.github/workflows/release.yml`) builds the Windows installer and publishes `AV-Control-Utility-Setup-x.y.z.exe`, its `.blockmap` and `latest.yml` as a release. Installed apps find it within the hour.
-
-You can also type a different `owner/repo` or a web-folder URL into Settings > Software updates to override the built-in repository.
+The repository must stay public so installed apps can read its releases.
