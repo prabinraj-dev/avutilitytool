@@ -106,6 +106,8 @@ renderer/               UI: index.html, styles.css, app.js, devices.js, console.
 
 ## Publishing updates
 
-Pushing to the `AV-Code` branch is publishing. GitHub Actions (`.github/workflows/release.yml`) builds the Windows installer, numbers it automatically (`0.4.<run number>`), and publishes it to GitHub Releases. Installed copies check every hour, download the new version in the background and install it when the app is closed (or straight away with "Restart now"). To change the major or minor number, edit `version` in `package.json`.
+Pushing code does **not** publish. A release is created only on purpose: open the **Actions** tab, choose **Publish**, and press **Run workflow** (or push a tag such as `v1.0.0`). GitHub builds the Windows installer, numbers it automatically (`0.4.<run number>`; edit `version` in `package.json` to change the major/minor), writes release notes from the commit messages since the last release, and publishes it to GitHub Releases.
+
+Installed copies check every hour (and when you press **Check for updates**). When a newer version exists they show the version and what changed, and ask **"Do you want to update now?"**. Only after the user agrees does the app download, install and restart. Devices, mappings and settings are kept.
 
 The repository must stay public so installed apps can read its releases.

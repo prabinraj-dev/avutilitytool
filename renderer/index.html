@@ -48,13 +48,6 @@
     </aside>
 
     <main class="content">
-      <div class="update-banner hidden" id="updateBanner" role="status">
-        <span id="updateBannerText">An update is ready.</span>
-        <span class="update-banner-actions">
-          <button type="button" class="btn btn-primary" id="updateBannerRestart">Restart now</button>
-          <button type="button" class="btn btn-secondary" id="updateBannerLater">Later</button>
-        </span>
-      </div>
       <!-- ===================== DEVICES ===================== -->
       <section id="tab-devices" class="tab active">
         <header class="tab-header">
@@ -380,12 +373,7 @@
           </div>
           <p class="set-line">Installed version <strong id="updVersion" class="mono">&mdash;</strong><span id="updNewWrap" class="hidden"> &middot; latest <strong id="updNew" class="mono"></strong></span></p>
 
-          <label>Update source (GitHub repository)
-            <input type="text" id="updUrl" placeholder="owner/repo  (e.g. acme/av-control-utility)" autocomplete="off" spellcheck="false" />
-          </label>
-          <p class="dt-hint" id="updSourceHint">Where new releases are published. Leave this empty to use the repository built into this version. A web folder URL that holds <span class="mono">latest.yml</span> also works.</p>
-
-          <label class="checkbox"><input type="checkbox" id="updAuto" checked /> Update automatically (checks at start and every hour, downloads in the background, installs when you close the app)</label>
+          <label class="checkbox"><input type="checkbox" id="updAuto" checked /> Check for updates automatically (at start and every hour). You are always asked before anything is installed.</label>
           <p class="set-line" id="updLastWrap">Last checked <strong id="updLast" class="mono">never</strong></p>
 
           <div class="progress-track hidden" id="updProgressTrack"><div class="progress-fill" id="updProgressFill"></div></div>
@@ -393,18 +381,37 @@
 
           <div class="set-actions">
             <button id="updCheckBtn" class="btn btn-secondary" type="button">Check for updates</button>
-            <button id="updDownloadBtn" class="btn btn-primary hidden" type="button">Download update</button>
+            <button id="updDownloadBtn" class="btn btn-primary hidden" type="button">View update</button>
             <button id="updInstallBtn" class="btn btn-primary hidden" type="button">Restart &amp; install</button>
           </div>
         </div>
 
         <div class="panel set-card">
           <h2 class="panel-title">How updating works</h2>
-          <p class="set-line">Updates download quietly in the background and are installed the next time you close the app (or straight away if you press Restart now). Your devices, command mappings and settings are stored separately from the program, so they are kept. You can also update by running a newer <span class="mono">Setup.exe</span> over the existing install.</p>
+          <p class="set-line">When a new version is found you see what changed and are asked whether to update. Your devices, command mappings and settings are stored separately from the program, so they are kept. You can also update by running a newer <span class="mono">Setup.exe</span> over the existing install.</p>
         </div>
       </section>
     </main>
   </div>
+
+  <div class="modal-backdrop hidden" id="updateDialog" role="dialog" aria-modal="true" aria-labelledby="updDlgTitle">
+    <div class="modal update-modal">
+      <div class="modal-header"><h2 id="updDlgTitle">Update available</h2></div>
+      <div class="modal-body">
+        <p class="set-line" id="updDlgVersions"></p>
+        <h3 id="updDlgNotesHead">What&rsquo;s new</h3>
+        <pre class="update-notes" id="updDlgNotes"></pre>
+        <div class="progress-track hidden" id="updDlgTrack"><div class="progress-fill" id="updDlgFill"></div></div>
+        <p class="dt-hint" id="updDlgMessage"></p>
+        <p class="update-question" id="updDlgQuestion">Do you want to update now? The app will restart, and your devices and settings are kept.</p>
+        <div class="modal-actions update-actions">
+          <button type="button" class="btn btn-secondary" id="updDlgLater">Later</button>
+          <button type="button" class="btn btn-primary" id="updDlgYes">Update now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <div id="toast" class="toast hidden" role="status">
     <span id="toastText"></span>

@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { app } = require('electron');
 const { resolveFeed, describeFeed } = require('./update-source');
+const { notesToText, friendlyError } = require('./update-notes');
 
 const STARTUP_DELAY_MS = 8 * 1000;
 const CHECK_INTERVAL_MS = 60 * 60 * 1000; // re-check hourly while the app is open
@@ -14,8 +15,9 @@ function bundledRepo() {
   }
 }
 
-// Fully automatic updates: check at start and hourly, download in the background,
-// install when the app is closed, or right away if the user clicks "Restart now".
+// Checks for updates at start and hourly. When one is found the UI shows the version and
+// what changed and asks for confirmation; only after the user agrees does it download,
+// install and restart. The update source is built into the app and never shown.
 class UpdateManager {
   constructor({ store, send }) {
     this.store = store;
@@ -25,6 +27,7 @@ class UpdateManager {
     this.autoUpdater = null;
     this.timer = null;
     this.busy = false;
+    this.installAfterDownload = false;
   }
 
   log(message) {
@@ -44,19 +47,29 @@ class UpdateManager {
     if (this.autoUpdater) return this.autoUpdater;
     // eslint-disable-next-line global-require
     const { autoUpdater } = require('electron-updater');
-    autoUpdater.autoDownload = true; // no click needed: new versions download by themselves
-    autoUpdater.autoInstallOnAppQuit = true; // and install when the app is closed
+    autoUpdater.autoDownload = false; // wait for the user's confirmation
+    autoUpdater.autoInstallOnAppQuit = false;
     autoUpdater.allowPrerelease = false;
     autoUpdater.logger = {
       info: (m) => this.log(`info: ${m}`), warn: (m) => this.log(`warn: ${m}`), error: (m) => this.log(`error: ${m}`), debug: () => {},
     };
 
     autoUpdater.on('checking-for-update', () => this.setState({ state: 'checking', message: '' }));
-    autoUpdater.on('update-available', (info) => this.setState({ state: 'downloading', newVersion: info.version, percent: 0, message: '' }));
+    autoUpdater.on('update-available', (info) => this.setState({
+      state: 'available', newVersion: info.version, notes: notesToText(info.releaseNotes), percent: 0, message: '', checkedAt: Date.now(),
+    }));
     autoUpdater.on('update-not-available', () => this.setState({ state: 'none', newVersion: null, message: '', checkedAt: Date.now() }));
     autoUpdater.on('download-progress', (p) => this.setState({ state: 'downloading', percent: Math.round(p.percent || 0), message: '' }));
-    autoUpdater.on('update-downloaded', (info) => this.setState({ state: 'downloaded', newVersion: info.version, percent: 100, message: '', checkedAt: Date.now() }));
-    autoUpdater.on('error', (err) => this.setState({ state: 'error', message: (err && err.message ? err.message : String(err)).split('\n')[0].slice(0, 200) }));
+    autoUpdater.on('update-downloaded', (info) => {
+      this.setState({ state: 'downloaded', newVersion: info.version, percent: 100, message: '', checkedAt: Date.now() });
+      // The user already said yes to this update, so finish the job and restart.
+      if (this.installAfterDownload) setTimeout(() => this.install(), 1500);
+    });
+    autoUpdater.on('error', (err) => {
+      this.installAfterDownload = false;
+      this.log(`error detail: ${err && err.message ? err.message.split('\n')[0] : err}`);
+      this.setState({ state: 'error', message: friendlyError(err) });
+    });
 
     this.autoUpdater = autoUpdater;
     return autoUpdater;
@@ -65,43 +78,51 @@ class UpdateManager {
   bundledRepo() { return bundledRepo(); }
 
   feed() {
-    return resolveFeed(this.store.getSettings().updateUrl, bundledRepo());
+    return resolveFeed('', bundledRepo()); // built-in source only; not user-editable
   }
 
-  async check() {
+  async check({ manual = false } = {}) {
     if (!app.isPackaged) {
-      this.setState({ state: 'unavailable', message: 'Updates only work in the installed app, not in development mode.' });
+      this.setState({ state: 'unavailable', manual, message: 'Updates only work in the installed app, not in development mode.' });
       return this.state;
     }
-    // A downloaded update is waiting for a restart: nothing more to fetch.
-    if (this.state.state === 'downloaded' || this.state.state === 'downloading') return this.state;
-    if (this.busy) return this.state;
+    if (['downloading', 'downloaded'].includes(this.state.state) || this.busy) return this.state;
+    // Already found and waiting for an answer: show it again on a manual check, no network needed.
+    if (this.state.state === 'available') {
+      this.setState({ manual });
+      return this.state;
+    }
 
     const feed = this.feed();
     if (!feed) {
-      this.setState({ state: 'unavailable', message: 'No update source is set. Enter your GitHub repository (owner/repo) in Settings.' });
+      this.setState({ state: 'unavailable', manual, message: 'Updates are not set up in this build.' });
       return this.state;
     }
     this.busy = true;
+    this.state = { ...this.state, manual }; // carried into the status events below
     try {
       const updater = this.getUpdater();
       updater.setFeedURL(feed);
       this.log(`checking ${describeFeed(feed)}`);
       await updater.checkForUpdates();
     } catch (err) {
-      this.setState({ state: 'error', message: (err && err.message ? err.message : String(err)).split('\n')[0].slice(0, 200) });
+      this.setState({ state: 'error', manual, message: friendlyError(err) });
     } finally {
       this.busy = false;
     }
     return this.state;
   }
 
-  // Kept for the manual "Download" path if a download was interrupted.
+  // Called when the user confirms "Update now": download, then install and restart.
   async download() {
+    if (this.state.state !== 'available') return this.state;
+    this.installAfterDownload = true;
+    this.setState({ state: 'downloading', percent: 0, message: '' });
     try {
       await this.getUpdater().downloadUpdate();
     } catch (err) {
-      this.setState({ state: 'error', message: (err && err.message ? err.message : String(err)).split('\n')[0].slice(0, 200) });
+      this.installAfterDownload = false;
+      this.setState({ state: 'error', message: friendlyError(err) });
     }
     return this.state;
   }
@@ -118,7 +139,7 @@ class UpdateManager {
     const run = () => {
       const settings = this.store.getSettings();
       if (settings.autoCheckUpdates === false || !this.feed()) return;
-      this.check();
+      this.check({ manual: false });
     };
     setTimeout(run, STARTUP_DELAY_MS);
     this.timer = setInterval(run, CHECK_INTERVAL_MS);

@@ -1,18 +1,15 @@
 name: Publish
 
-# Every push to the AV-Code branch builds the Windows installer and publishes it as a new
-# GitHub Release. Installed copies of the app find it within the hour and
-# update themselves. No version bump or tag is needed: the patch number
-# is the workflow run number, so each publish is automatically newer.
-# (Pushing a tag like v1.0.0 publishes exactly that version instead.)
+# Publishing only happens on purpose: run this workflow from the Actions tab
+# ("Run workflow"), or push a tag like v1.0.0. Pushing code alone does NOT publish.
+# The version is chosen automatically (patch = run number), so each publish is newer.
+# Installed apps then find it within the hour, show what changed, and ask the user
+# before updating.
 on:
   push:
-    branches: [AV-Code]
-    paths-ignore:
-      - '**.md'
     tags:
       - 'v*'
-  workflow_dispatch: # "Run workflow" button
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -26,6 +23,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history + tags, used to write the release notes
 
       - uses: actions/setup-node@v4
         with:
@@ -53,3 +52,21 @@ jobs:
         run: npx electron-builder --win nsis --x64 --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Write release notes (what changed since the last release)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v$VERSION"
+          PREV=$(git tag --sort=-v:refname | grep -v "^$TAG$" | head -1 || true)
+          if [ -n "$PREV" ]; then
+            LOG=$(git log "$PREV"..HEAD --no-merges --pretty='- %s' | grep -vi '^- publish' || true)
+          else
+            LOG=$(git log -10 --no-merges --pretty='- %s')
+          fi
+          if [ -z "$LOG" ]; then LOG="- Maintenance update"; fi
+          printf '%s\n' "$LOG" > notes.md
+          cat notes.md
+          gh release edit "$TAG" --notes-file notes.md

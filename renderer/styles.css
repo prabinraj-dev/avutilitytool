@@ -275,12 +275,14 @@ textarea { resize: vertical; font-family: var(--mono); }
 .dot-offline { background: var(--status-offline); }
 .dot-unknown { background: var(--status-unknown); }
 
-.update-banner {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
-  background: var(--accent-dim); border: 1px solid var(--accent); color: var(--text);
-  border-radius: 10px; padding: 8px 14px; margin-bottom: 14px; font-size: 13px;
+.update-modal { width: min(560px, 92vw); }
+.update-notes {
+  margin: 0 0 14px; padding: 12px 14px; max-height: 220px; overflow-y: auto; white-space: pre-wrap;
+  background: var(--log-bg); border: 1px solid var(--border); border-radius: var(--radius);
+  font-family: var(--sans); font-size: 13px; line-height: 1.5; color: var(--text);
 }
-.update-banner-actions { display: inline-flex; gap: 8px; }
+.update-question { margin: 6px 0 14px; font-size: 13.5px; }
+.update-actions { gap: 10px; }
 
 /* ---------- discovery ---------- */
 .scan-progress { display: flex; align-items: center; gap: 12px; margin-top: 14px; font-size: 12.5px; color: var(--text-dim); }

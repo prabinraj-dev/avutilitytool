@@ -19,7 +19,7 @@ async function transmit(device, params) {
 }
 
 // Only these settings can be changed from the renderer.
-const EDITABLE_SETTINGS = ['updateUrl', 'autoCheckUpdates'];
+const EDITABLE_SETTINGS = ['autoCheckUpdates']; // the update source is built in, not editable
 
 const { LinkManager } = require('./link');
 
@@ -132,11 +132,11 @@ function registerIpcHandlers({
     EDITABLE_SETTINGS.forEach((key) => { if (key in patch) clean[key] = patch[key]; });
     return store.setSettings(clean);
   });
-  ipcMain.handle('app:info', () => ({ version: app.getVersion(), packaged: app.isPackaged, name: app.getName(), bundledRepo: updater.bundledRepo() }));
+  ipcMain.handle('app:info', () => ({ version: app.getVersion(), packaged: app.isPackaged, name: app.getName()}));
 
   // --- Updates -------------------------------------------------------
   ipcMain.handle('updater:status', () => updater.state);
-  ipcMain.handle('updater:check', () => updater.check());
+  ipcMain.handle('updater:check', () => updater.check({ manual: true }));
   ipcMain.handle('updater:download', () => updater.download());
   ipcMain.handle('updater:install', () => { updater.install(); return true; });
 }
