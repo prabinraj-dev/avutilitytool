@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; media-src 'self' blob: mediastream:; img-src 'self' data:" />
+  <title>AV Control Utility</title>
+  <script src="theme-init.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <img class="brand-mark" src="icon.png" alt="" />
+        <span class="brand-name">Control Utility</span>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-tab="devices">Devices</button>
+        <button class="nav-item" data-tab="console">Command Console</button>
+        <button class="nav-item" data-tab="control">Control</button>
+        <button class="nav-item" data-tab="devicetest">Device Test</button>
+        <button class="nav-item" data-tab="settings">Settings</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="heartbeat-row">
+          <label for="heartbeatInterval">Heartbeat</label>
+          <select id="heartbeatInterval">
+            <option value="5000">Every 5s</option>
+            <option value="10000" selected>Every 10s</option>
+            <option value="30000">Every 30s</option>
+          </select>
+        </div>
+        <div class="theme-row">
+          <span class="theme-label">Theme</span>
+          <div class="segmented" role="group" aria-label="Color theme">
+            <button type="button" class="seg-btn" data-theme-choice="dark" aria-pressed="true">Dark</button>
+            <button type="button" class="seg-btn" data-theme-choice="light" aria-pressed="false">Light</button>
+          </div>
+        </div>
+        <div class="status-summary" id="statusSummary">0 devices</div>
+        <div class="version-row">
+          <span id="appVersion" class="version-text">v&mdash;</span>
+          <button type="button" id="updateChip" class="update-chip hidden">Update available</button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="update-banner hidden" id="updateBanner" role="status">
+        <span id="updateBannerText">An update is ready.</span>
+        <span class="update-banner-actions">
+          <button type="button" class="btn btn-primary" id="updateBannerRestart">Restart now</button>
+          <button type="button" class="btn btn-secondary" id="updateBannerLater">Later</button>
+        </span>
+      </div>
+      <!-- ===================== DEVICES ===================== -->
+      <section id="tab-devices" class="tab active">
+        <header class="tab-header">
+          <h1>Devices</h1>
+          <p class="tab-sub">Add hardware by hand, or scan your network to find what's already on it.</p>
+        </header>
+
+        <div class="panel collapsible" data-collapse-id="add-device" id="addDevicePanel">
+          <div class="panel-head">
+            <h2 class="panel-title">Add device</h2>
+            <button type="button" class="collapse-toggle" aria-expanded="true">Hide</button>
+          </div>
+          <div class="panel-body">
+            <form id="addDeviceForm" class="form-grid">
+              <label>Name<input type="text" name="name" required placeholder="Boardroom display" /></label>
+              <label>IP address<input type="text" name="ip" required placeholder="192.168.1.50" /></label>
+              <label>Port<input type="number" name="port" required placeholder="23" min="1" max="65535" /></label>
+              <label>Protocol
+                <select name="protocol">
+                  <option value="tcp">TCP/IP</option>
+                  <option value="udp">UDP/IP</option>
+                </select>
+              </label>
+              <label>Room / zone<input type="text" name="room" placeholder="Boardroom A" /></label>
+              <button type="submit" class="btn btn-primary">Add device</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="panel collapsible" data-collapse-id="discovery" id="discoveryPanel">
+          <div class="panel-head">
+            <h2 class="panel-title">Auto-discovery</h2>
+            <button type="button" class="collapse-toggle" aria-expanded="true">Hide</button>
+          </div>
+          <div class="panel-body">
+            <form id="discoveryForm" class="discovery-form">
+              <label class="grow">Network to scan
+                <input type="text" name="target" placeholder="192.168.1.0/24   or   192.168.1.50   or   192.168.1.10-40" autocomplete="off" />
+              </label>
+              <label class="ports-field"><span class="label-line">Ports <span class="optional">optional</span></span>
+                <input type="text" name="ports" placeholder="Leave empty for common AV ports" autocomplete="off" />
+              </label>
+              <div class="form-actions">
+                <button type="submit" id="scanBtn" class="btn btn-primary">Scan network</button>
+                <button type="button" id="cancelScanBtn" class="btn btn-secondary hidden">Stop</button>
+              </div>
+            </form>
+            <div class="chip-row" id="networkChips"></div>
+            <p class="dt-hint" id="scanHint">Ports are optional. With none entered, every address is pinged and 20 common AV ports are checked (Telnet, PJLink, Crestron, Extron, Q-SYS, Samsung, LG, Sony&hellip;). You can also type ports like <span class="mono">23, 80, 5000-5010</span>.</p>
+            <div id="scanProgress" class="scan-progress hidden">
+              <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+              <span id="progressLabel">Scanning&hellip;</span>
+            </div>
+            <div id="scanSummary" class="scan-summary hidden"></div>
+            <ul id="scanResults" class="scan-results"></ul>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2 class="panel-title">Known devices <span class="count-pill" id="deviceCount">0</span></h2>
+          <table class="device-table">
+            <thead>
+              <tr><th>Status</th><th>Name</th><th>IP : Port</th><th>Protocol</th><th>Room / zone</th><th>Last seen</th><th></th></tr>
+            </thead>
+            <tbody id="deviceTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================== CONSOLE ===================== -->
+      <section id="tab-console" class="tab">
+        <header class="tab-header">
+          <h1>Command Console</h1>
+          <p class="tab-sub">Connect over TCP/IP, UDP or a serial (COM) port, send commands, and watch the data in both directions.</p>
+        </header>
+
+        <div class="console-layout">
+          <div class="panel console-config">
+            <div class="dt-head">
+              <h2 class="panel-title">Connection</h2>
+              <span class="badge badge-idle" id="linkBadge"><i></i><span>Disconnected</span></span>
+            </div>
+
+            <label>Connected device
+              <span class="row-inline">
+                <select id="consoleDevice"></select>
+                <button type="button" id="consoleRescan" class="btn btn-ghost btn-sm" title="Re-scan COM ports and devices">Rescan</button>
+              </span>
+            </label>
+
+            <div class="segmented" id="linkModes" role="group" aria-label="Connection type">
+              <button type="button" class="seg-btn" data-mode="tcp" aria-pressed="true">TCP Client</button>
+              <button type="button" class="seg-btn" data-mode="udp" aria-pressed="false">UDP</button>
+              <button type="button" class="seg-btn" data-mode="serial" aria-pressed="false">Serial</button>
+            </div>
+
+            <fieldset id="linkFields" class="link-fields">
+              <div class="link-group" data-for="tcp udp">
+                <div class="link-row">
+                  <label class="grow">Module IP<input type="text" id="linkIp" placeholder="192.168.1.50" autocomplete="off" spellcheck="false" /></label>
+                  <label class="narrow">Port<input type="number" id="linkPort" min="1" max="65535" placeholder="23" /></label>
+                </div>
+              </div>
+
+              <div class="link-group hidden" data-for="udp">
+                <div class="link-row">
+                  <label class="narrow">Local port<input type="number" id="linkLocalPort" min="0" max="65535" placeholder="9000" /></label>
+                  <label class="checkbox grow-end"><input type="checkbox" id="linkBroadcast" /> Broadcast</label>
+                </div>
+              </div>
+
+              <div class="link-group hidden" data-for="serial">
+                <label>Port<select id="serialPath"></select></label>
+                <div class="link-row">
+                  <label class="grow">Baud
+                    <select id="serialBaud">
+                      <option>1200</option><option>2400</option><option>4800</option><option selected>9600</option><option>14400</option>
+                      <option>19200</option><option>38400</option><option>57600</option><option>115200</option><option>230400</option>
+                      <option>460800</option><option>921600</option>
+                    </select>
+                  </label>
+                  <label class="grow">Data size
+                    <select id="serialData"><option>5</option><option>6</option><option>7</option><option selected>8</option></select>
+                  </label>
+                </div>
+                <div class="link-row">
+                  <label class="grow">Parity
+                    <select id="serialParity">
+                      <option value="none" selected>none</option><option value="even">even</option><option value="odd">odd</option>
+                      <option value="mark">mark</option><option value="space">space</option>
+                    </select>
+                  </label>
+                  <label class="grow">Stop bits
+                    <select id="serialStop"><option selected>1</option><option value="2">2</option></select>
+                  </label>
+                </div>
+                <label>Handshake
+                  <select id="serialFlow">
+                    <option value="none" selected>OFF</option><option value="rtscts">RTS/CTS</option><option value="xonxoff">XON/XOFF</option>
+                  </select>
+                </label>
+              </div>
+            </fieldset>
+
+            <div class="link-group hidden" id="serialLines" data-for="serial">
+              <div class="modem-lines" id="modemLines">
+                <span class="led" data-led="cd"><i></i>CD</span>
+                <span class="led" data-led="ri"><i></i>RI</span>
+                <span class="led" data-led="dsr"><i></i>DSR</span>
+                <span class="led" data-led="cts"><i></i>CTS</span>
+              </div>
+              <div class="link-row">
+                <label class="checkbox"><input type="checkbox" id="lineDtr" disabled /> DTR</label>
+                <label class="checkbox"><input type="checkbox" id="lineRts" disabled /> RTS</label>
+              </div>
+            </div>
+
+            <button id="linkToggleBtn" class="btn btn-primary" type="button">Connect</button>
+            <p class="dt-hint" id="linkHint"></p>
+          </div>
+
+          <div class="console-right">
+            <div class="panel console-log-panel">
+              <div class="console-log-header">
+                <h2 class="panel-title">Received / sent data</h2>
+                <div class="console-log-actions">
+                  <label class="checkbox"><input type="checkbox" id="autoScroll" checked /> Auto-scroll</label>
+                  <button id="clearLogBtn" class="btn btn-ghost btn-sm">Clear</button>
+                </div>
+              </div>
+              <div id="consoleLog" class="console-log"></div>
+            </div>
+
+            <div class="panel send-panel">
+              <div class="dt-head">
+                <h2 class="panel-title">Send</h2>
+                <label class="inline-select">Line ending
+                  <select id="consoleDelimiter">
+                    <option value="none">None</option>
+                    <option value="cr">CR (\r)</option>
+                    <option value="lf">LF (\n)</option>
+                    <option value="crlf" selected>CRLF (\r\n)</option>
+                    <option value="custom">Custom&hellip;</option>
+                  </select>
+                </label>
+              </div>
+              <div id="customDelimiterRow" class="custom-delimiter-row hidden">
+                <label>Custom line ending<input type="text" id="consoleDelimiterCustom" placeholder="0D0A or literal text" /></label>
+                <label>Interpret as
+                  <select id="consoleDelimiterEncoding"><option value="text">Text</option><option value="hex">Hex</option></select>
+                </label>
+              </div>
+              <div class="send-line" data-line="0">
+                <input type="text" class="send-input" placeholder="Command, e.g. POWER ON" autocomplete="off" spellcheck="false" />
+                <label class="checkbox"><input type="checkbox" class="send-hex" /> HEX</label>
+                <button type="button" class="btn btn-secondary btn-sm send-btn">Send</button>
+              </div>
+              <div class="send-line" data-line="1">
+                <input type="text" class="send-input" autocomplete="off" spellcheck="false" />
+                <label class="checkbox"><input type="checkbox" class="send-hex" /> HEX</label>
+                <button type="button" class="btn btn-secondary btn-sm send-btn">Send</button>
+              </div>
+              <div class="send-line" data-line="2">
+                <input type="text" class="send-input" autocomplete="off" spellcheck="false" />
+                <label class="checkbox"><input type="checkbox" class="send-hex" /> HEX</label>
+                <button type="button" class="btn btn-secondary btn-sm send-btn">Send</button>
+              </div>
+              <p class="dt-hint">HEX lines are sent exactly as typed bytes (for example <span class="mono">aa bb 00 21</span>) with no line ending added. Text lines get the line ending above.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== CONTROL ===================== -->
+      <section id="tab-control" class="tab">
+        <header class="tab-header">
+          <h1>Control</h1>
+          <p class="tab-sub">Daily operation. Buttons with a dashed outline have no command yet &mdash; set them in &ldquo;Edit command mapping&rdquo;.</p>
+        </header>
+
+        <div class="panel control-toolbar">
+          <label>Device<select id="controlDevice"></select></label>
+          <span class="badge badge-idle" id="controlStatus"><i></i><span>No device</span></span>
+          <button id="openMappingBtn" class="btn btn-secondary">Edit command mapping</button>
+        </div>
+
+        <div id="controlEmpty" class="control-empty hidden">No device selected. Add one on the Devices tab, then pick it above. The controls below stay visible so you can see the layout.</div>
+
+        <div class="control-grid">
+          <div class="panel control-card">
+            <h2 class="panel-title">Power</h2>
+            <div class="power-row">
+              <button id="powerOnBtn" class="btn btn-power btn-power-on" type="button">Power on</button>
+              <button id="powerOffBtn" class="btn btn-power btn-power-off" type="button">Power off</button>
+            </div>
+          </div>
+
+          <div class="panel control-card">
+            <h2 class="panel-title">Volume</h2>
+            <div class="volume-controls">
+              <button id="volDownBtn" class="btn btn-round" type="button" aria-label="Volume down">&minus;</button>
+              <input type="range" id="volSlider" min="0" max="100" value="50" />
+              <button id="volUpBtn" class="btn btn-round" type="button" aria-label="Volume up">+</button>
+            </div>
+            <button id="muteBtn" class="btn btn-toggle" type="button">Mute</button>
+          </div>
+
+          <div class="panel control-card control-wide">
+            <h2 class="panel-title">Source</h2>
+            <div id="sourceButtons" class="source-grid"></div>
+          </div>
+        </div>
+
+        <div id="controlFeedback" class="control-feedback"></div>
+      </section>
+
+      <!-- ===================== DEVICE TEST ===================== -->
+      <section id="tab-devicetest" class="tab">
+        <header class="tab-header">
+          <h1>Device Test</h1>
+          <p class="tab-sub">Check a USB camera, microphone or speaker before the meeting. Newly plugged-in devices appear automatically.</p>
+          <div class="dt-header-actions">
+            <label class="checkbox"><input type="checkbox" id="dtAutoSwitch" checked /> Switch to newly connected devices</label>
+            <button id="dtRescan" class="btn btn-secondary btn-sm">Rescan devices</button>
+          </div>
+        </header>
+
+        <div class="dt-grid">
+          <div class="panel dt-card dt-camera">
+            <div class="dt-head">
+              <h2 class="panel-title">Camera</h2>
+              <span class="badge badge-idle" id="dtCamStatus"><i></i><span>Not started</span></span>
+            </div>
+            <label>Camera<select id="dtCamera"></select></label>
+            <div class="dt-video-wrap">
+              <video id="dtVideo" autoplay playsinline muted></video>
+              <div class="dt-video-empty" id="dtVideoEmpty">No camera preview</div>
+            </div>
+            <div class="dt-row">
+              <span class="dt-info mono" id="dtCamInfo">&mdash;</span>
+              <button id="dtCamToggle" class="btn btn-secondary btn-sm">Stop camera</button>
+            </div>
+          </div>
+
+          <div class="panel dt-card">
+            <div class="dt-head">
+              <h2 class="panel-title">Microphone</h2>
+              <span class="badge badge-idle" id="dtMicStatus"><i></i><span>Not started</span></span>
+            </div>
+            <label>Microphone<select id="dtMic"></select></label>
+            <div class="dt-meter" id="dtMeter" aria-label="Microphone level"></div>
+            <p class="dt-hint">Say something &mdash; the bars should move.</p>
+            <button id="dtRecord" class="btn btn-secondary">Record 5 s &amp; play back</button>
+          </div>
+
+          <div class="panel dt-card">
+            <div class="dt-head">
+              <h2 class="panel-title">Speaker</h2>
+              <span class="badge badge-idle" id="dtSpkStatus"><i></i><span>Not tested</span></span>
+            </div>
+            <label>Speaker<select id="dtSpeaker"></select></label>
+            <label>Volume<input type="range" id="dtVolume" min="0" max="100" value="60" /></label>
+            <div class="dt-btn-row">
+              <button id="dtPlayTone" class="btn btn-secondary">Play test sound</button>
+              <button id="dtPlayLeft" class="btn btn-ghost btn-sm">Left</button>
+              <button id="dtPlayRight" class="btn btn-ghost btn-sm">Right</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== SETTINGS ===================== -->
+      <section id="tab-settings" class="tab">
+        <header class="tab-header">
+          <h1>Settings</h1>
+          <p class="tab-sub">Keep AV Control Utility up to date without reinstalling it by hand.</p>
+        </header>
+
+        <div class="panel set-card">
+          <div class="dt-head">
+            <h2 class="panel-title">Software updates</h2>
+            <span class="badge badge-idle" id="updStatus"><i></i><span>Not checked</span></span>
+          </div>
+          <p class="set-line">Installed version <strong id="updVersion" class="mono">&mdash;</strong><span id="updNewWrap" class="hidden"> &middot; latest <strong id="updNew" class="mono"></strong></span></p>
+
+          <label>Update source (GitHub repository)
+            <input type="text" id="updUrl" placeholder="owner/repo  (e.g. acme/av-control-utility)" autocomplete="off" spellcheck="false" />
+          </label>
+          <p class="dt-hint" id="updSourceHint">Where new releases are published. Leave this empty to use the repository built into this version. A web folder URL that holds <span class="mono">latest.yml</span> also works.</p>
+
+          <label class="checkbox"><input type="checkbox" id="updAuto" checked /> Update automatically (checks at start and every hour, downloads in the background, installs when you close the app)</label>
+          <p class="set-line" id="updLastWrap">Last checked <strong id="updLast" class="mono">never</strong></p>
+
+          <div class="progress-track hidden" id="updProgressTrack"><div class="progress-fill" id="updProgressFill"></div></div>
+          <p class="dt-hint" id="updMessage"></p>
+
+          <div class="set-actions">
+            <button id="updCheckBtn" class="btn btn-secondary" type="button">Check for updates</button>
+            <button id="updDownloadBtn" class="btn btn-primary hidden" type="button">Download update</button>
+            <button id="updInstallBtn" class="btn btn-primary hidden" type="button">Restart &amp; install</button>
+          </div>
+        </div>
+
+        <div class="panel set-card">
+          <h2 class="panel-title">How updating works</h2>
+          <p class="set-line">Updates download quietly in the background and are installed the next time you close the app (or straight away if you press Restart now). Your devices, command mappings and settings are stored separately from the program, so they are kept. You can also update by running a newer <span class="mono">Setup.exe</span> over the existing install.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status">
+    <span id="toastText"></span>
+    <button id="toastAction" class="btn btn-ghost btn-sm hidden">Open Device Test</button>
+  </div>
+  <audio id="dtTone"></audio>
+  <audio id="dtPlayback"></audio>
+
+  <div id="modalRoot"></div>
+
+  <script src="app.js"></script>
+  <script src="devices.js"></script>
+  <script src="console.js"></script>
+  <script src="control.js"></script>
+  <script src="devicetest.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>

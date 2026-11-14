@@ -1,0 +1,80 @@
+{
+  "name": "av-control-suite",
+  "version": "0.4.1",
+  "description": "AV Control Utility - AV device monitoring, command console, control dashboard and USB peripheral test.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --x64",
+    "configure-updates": "node scripts/configure-updates.js",
+    "release": "node scripts/release.js",
+    "test": "node test/update-source.test.js && node test/link.test.js"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "electron": "^32.3.3",
+    "electron-builder": "^24.13.3",
+    "resedit": "^2.0.3"
+  },
+  "build": {
+    "appId": "com.avcontrol.utility",
+    "productName": "AV Control Utility",
+    "copyright": "AV Control Utility",
+    "afterPack": "build/afterPack.js",
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "renderer/**/*",
+      "package.json",
+      "!node_modules/@serialport/bindings-cpp/prebuilds/{android-arm,android-arm64,darwin-x64+arm64,linux-arm,linux-arm64,linux-x64,win32-ia32}/**"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "AV Control Utility",
+      "uninstallDisplayName": "AV Control Utility",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "AV-Control-Utility-Setup-${version}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "prabinraj-dev",
+        "repo": "avutilitytool",
+        "releaseType": "release"
+      }
+    ],
+    "npmRebuild": false,
+    "asarUnpack": [
+      "node_modules/@serialport/bindings-cpp/prebuilds/win32-x64/**"
+    ]
+  },
+  "productName": "AV Control Utility",
+  "dependencies": {
+    "electron-updater": "^6.8.11",
+    "serialport": "^12.0.0"
+  }
+}

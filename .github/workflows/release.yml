@@ -1,0 +1,40 @@
+name: Release
+
+# Pushing a tag like v0.3.1 (npm run release does this) builds the Windows installer
+# and publishes it to GitHub Releases. Installed copies of the app then update themselves.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Check tag matches package.json version
+        shell: bash
+        run: |
+          PKG="v$(node -p "require('./package.json').version")"
+          if [ "$PKG" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version $PKG"; exit 1
+          fi
+
+      - run: npm ci
+
+      - name: Point the build at this repository
+        run: node scripts/configure-updates.js ${{ github.repository }}
+
+      - name: Build and publish installer
+        run: npx electron-builder --win nsis --x64 --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
