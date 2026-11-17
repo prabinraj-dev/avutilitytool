@@ -8,8 +8,15 @@ const {
 
 const PROFILES = [
   require('./profiles/pjlink'),
+  require('./profiles/epson'),
+  require('./profiles/panasonic'),
+  require('./profiles/benq'),
+  require('./profiles/barco'),
   require('./profiles/samsung'),
   require('./profiles/qsys'),
+  require('./profiles/lightware'),
+  require('./profiles/lg'),
+  require('./profiles/hikvision'),
   require('./profiles/extron'),
   require('./profiles/crestron'),
   require('./profiles/amx'),
@@ -48,6 +55,23 @@ function httpInfo(ip, port, creds) {
           realm: (/realm="([^"]+)"/i.exec(String(res.headers['www-authenticate'] || '')) || [])[1] || '',
         });
       });
+    });
+    req.on('timeout', () => req.destroy());
+    req.on('error', () => resolve(null));
+    req.end();
+  });
+}
+
+// Plain HTTP(S) GET for profiles that use a device's web API. Resolves null if nothing answers.
+function rawHttp(ip, port, secure, path, headers) {
+  return new Promise((resolve) => {
+    const req = (secure ? https : http).request({
+      host: ip, port, path, method: 'GET', headers: { 'User-Agent': 'AV-Control-Utility', ...headers }, timeout: 3000, rejectUnauthorized: false,
+    }, (res) => {
+      let body = '';
+      res.setEncoding('utf8');
+      res.on('data', (c) => { if (body.length < 65536) body += c; });
+      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body }));
     });
     req.on('timeout', () => req.destroy());
     req.on('error', () => resolve(null));
@@ -106,7 +130,8 @@ async function getDetails({
     onProgress({ step: `Asking: ${profile.name}…` });
     try {
       const open1 = (p, options) => (sessionFactory || Session.open)(ip, real(p), 2500, options);
-      const found = await withTimeout(profile.identify({ open: open1, creds, openPorts: openList }), 15000, profile.name);
+      const request = (p, path, headers) => rawHttp(ip, real(p), p === 443 || p === 8443, path, headers);
+      const found = await withTimeout(profile.identify({ open: open1, request, creds, openPorts: openList }), 15000, profile.name);
       if (!found || !found.matched) continue;
       const commands = profileCommands(profile, found.context);
       result.matches.push({

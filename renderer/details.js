@@ -7,7 +7,7 @@
     mac: 'MAC address', name: 'Device name', hostname: 'Host name', power: 'Power', input: 'Input', volume: 'Volume', mute: 'Mute',
     class: 'PJLink class', info: 'Other info', access: 'Logged in as', authentication: 'Authentication', displayId: 'Display ID',
     designName: 'Design name', designCode: 'Design code', state: 'State', status: 'Status', emulator: 'Emulator', redundant: 'Redundant',
-    versionInfo: 'Version info', tsid: 'TSID',
+    versionInfo: 'Version info', tsid: 'TSID', setId: 'Set ID', deviceType: 'Device type', lampHours: 'Lamp hours',
   };
   const FIELD_ORDER = Object.keys(FIELD_LABELS);
 

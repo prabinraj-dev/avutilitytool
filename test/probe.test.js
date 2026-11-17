@@ -147,6 +147,124 @@ const details = (ports, creds) => getDetails({ ip: '127.0.0.1', creds, skipSyste
   cr.close();
   console.log('crestron ok');
 
+  // ---------- Lightware LW3 ----------
+  const LW = { '/.ProductName': 'MMX4x2-HT200', '/.SerialNumber': '87654321', '/.PackageVersion': '1.6.0b10', '/MANAGEMENT/NETWORK.MacAddress': 'A8-D2-36-00-11-22', '/MANAGEMENT/NETWORK.HostName': 'lightware-87654321' };
+  const lw = await serve((s) => lines(s, (l) => { const path = l.trim().replace(/^GET /, ''); s.write(LW[path] ? `pr ${path}=${LW[path]}\r\n` : `pE ${path} %E001:Syntax error\r\n`); }, '\n'));
+  r = await details({ 6107: lw.port });
+  m = r.matches[0];
+  assert.deepStrictEqual([m.profileId, m.fields.model, m.fields.serial, m.fields.firmware, m.fields.mac, m.fields.hostname], ['lightware', 'MMX4x2-HT200', '87654321', '1.6.0b10', 'A8:D2:36:00:11:22', 'lightware-87654321']);
+  assert.ok(!('partNumber' in m.fields));
+  lw.close();
+  console.log('lightware ok');
+
+  // ---------- LG ----------
+  const LGR = { 'ka 01 ff': 'a 01 OK01x', 'fy 01 ff': 'y 01 OK805KCRN1A234x', 'fz 01 ff': 'z 01 OK041030x', 'xb 01 ff': 'b 01 OK90x', 'kf 01 ff': 'f 01 OK14x' };
+  const lg = await serve((s) => lines(s, (l) => s.write(LGR[l] || 'a 01 NG00x')));
+  r = await details({ 9761: lg.port });
+  m = r.matches[0];
+  assert.deepStrictEqual([m.profileId, m.fields.serial, m.fields.firmware, m.fields.power, m.fields.input, m.fields.volume], ['lg', '805KCRN1A234', '041030', 'On', 'HDMI 1', '20']);
+  assert.strictEqual(mergeCommands(null, 'lg').mapping.powerOn.payload, 'ka 01 01');
+  lg.close();
+  console.log('lg ok');
+
+  // ---------- Hikvision (HTTP digest login) ----------
+  const httpMod = require('http');
+  const md5 = (t) => crypto.createHash('md5').update(t).digest('hex');
+  const XML = '<?xml version="1.0"?><DeviceInfo version="2.0"><deviceName>Lobby Cam</deviceName><model>DS-2CD2143G2-I</model><serialNumber>DS-2CD2143G2-I20220101AAWRJ12345678</serialNumber><macAddress>a4:14:37:aa:bb:cc</macAddress><firmwareVersion>V5.7.3</firmwareVersion><firmwareReleasedDate>build 220112</firmwareReleasedDate><deviceType>IPCamera</deviceType></DeviceInfo>';
+  const hik = await new Promise((resolve) => {
+    const server = httpMod.createServer((req, res) => {
+      if (req.url !== '/ISAPI/System/deviceInfo') { res.writeHead(404); res.end(); return; }
+      const auth = req.headers.authorization || '';
+      const g = (k) => (new RegExp(`${k}="?([^",]+)"?`).exec(auth) || [])[1];
+      const expected = md5(`${md5('admin:IP Camera(H1234):Hik12345')}:abc123nonce:${g('nc')}:${g('cnonce')}:auth:${md5('GET:/ISAPI/System/deviceInfo')}`);
+      if (auth && g('username') === 'admin' && g('response') === expected) { res.writeHead(200, { 'Content-Type': 'application/xml' }); res.end(XML); return; }
+      res.writeHead(401, { 'WWW-Authenticate': 'Digest qop="auth", realm="IP Camera(H1234)", nonce="abc123nonce"' }); res.end();
+    });
+    server.listen(0, '127.0.0.1', () => resolve({ port: server.address().port, close: () => server.close() }));
+  });
+  r = await details({ 80: hik.port });
+  m = r.matches.find((x) => x.profileId === 'hikvision');
+  assert.ok(m && m.needsLogin && !m.loginFailed, 'hikvision asks for login');
+  r = await details({ 80: hik.port }, { username: 'admin', password: 'nope' });
+  assert.ok(r.matches.find((x) => x.profileId === 'hikvision').loginFailed);
+  r = await details({ 80: hik.port }, { username: 'admin', password: 'Hik12345' });
+  m = r.matches.find((x) => x.profileId === 'hikvision');
+  assert.deepStrictEqual([m.fields.model, m.fields.serial, m.fields.mac, m.fields.firmware, m.fields.name], ['DS-2CD2143G2-I', 'DS-2CD2143G2-I20220101AAWRJ12345678', 'A4:14:37:AA:BB:CC', 'V5.7.3 build 220112', 'Lobby Cam']);
+  hik.close();
+  // an ordinary web server on port 80 is not mistaken for Hikvision
+  const plain = await new Promise((resolve) => { const server = httpMod.createServer((req, res) => { res.writeHead(req.url === '/' ? 200 : 401, { 'WWW-Authenticate': 'Digest realm="router", nonce="x"' }); res.end('<title>Router</title>'); }); server.listen(0, '127.0.0.1', () => resolve({ port: server.address().port, close: () => server.close() })); });
+  r = await details({ 80: plain.port });
+  assert.strictEqual(r.matches.length, 0, 'generic 401 web server is not Hikvision');
+  assert.strictEqual(r.web[0].title, 'Router');
+  plain.close();
+  console.log('hikvision ok');
+
+  // ---------- Epson ESC/VP.net ----------
+  const EP = { 'PWR?': 'PWR=01', 'SNO?': 'SNO=X4HF1234567', 'SOURCE?': 'SOURCE=30', 'LAMP?': 'LAMP=1234' };
+  const epson = (needPw) => serve((s) => {
+    let ready = false; let buf = Buffer.alloc(0);
+    s.on('error', () => {});
+    s.on('data', (d) => {
+      buf = Buffer.concat([buf, d]);
+      if (!ready) {
+        if (buf.length < 16) return;
+        const hasPw = buf[15] === 1 && buf.toString('latin1', 18, 34).replace(/\0+$/, '') === 'epsonpw';
+        const ok = !needPw || hasPw;
+        s.write(Buffer.concat([Buffer.from('ESC/VP.net\x10\x03\x00\x00', 'latin1'), Buffer.from([ok ? 0x20 : 0x41, 0x00])]));
+        ready = ok; buf = Buffer.alloc(0); return;
+      }
+      const text = buf.toString('latin1'); if (!text.includes('\r')) return; buf = Buffer.alloc(0);
+      const q = text.split('\r')[0];
+      s.write(`${EP[q] || 'ERR'}\r:`);
+    });
+  });
+  const ep = await epson(false);
+  r = await details({ 3629: ep.port });
+  m = r.matches[0];
+  assert.deepStrictEqual([m.profileId, m.fields.serial, m.fields.power, m.fields.input, m.fields.lampHours], ['epson', 'X4HF1234567', 'On', 'HDMI 1', '1234']);
+  ep.close();
+  const ep2 = await epson(true);
+  r = await details({ 3629: ep2.port });
+  assert.ok(r.matches[0].needsLogin && !r.matches[0].loginFailed);
+  r = await details({ 3629: ep2.port }, { password: 'epsonpw' });
+  assert.strictEqual(r.matches[0].fields.serial, 'X4HF1234567');
+  ep2.close();
+  console.log('epson ok');
+
+  // ---------- Panasonic NTCONTROL (protected) ----------
+  const pana = await serve((s) => {
+    s.write('NTCONTROL 1 0a1b2c3d\r');
+    const good = crypto.createHash('md5').update('admin1:panasonic:0a1b2c3d').digest('hex');
+    lines(s, (l) => { if (!l.startsWith(good)) { s.write('ERRA\r'); return; } s.write(l.slice(32) === '00QPW' ? '00001\r' : '00ER401\r'); });
+  });
+  r = await details({ 1024: pana.port });
+  assert.ok(r.matches[0].profileId === 'panasonic' && r.matches[0].needsLogin);
+  r = await details({ 1024: pana.port }, { username: 'admin1', password: 'wrong' });
+  assert.ok(r.matches[0].loginFailed);
+  r = await details({ 1024: pana.port }, { username: 'admin1', password: 'panasonic' });
+  assert.strictEqual(r.matches[0].fields.power, 'On');
+  pana.close();
+  console.log('panasonic ok');
+
+  // ---------- BenQ ----------
+  const BQ = { 'modelname=?': '*MODELNAME=LU935ST#', 'pow=?': '*POW=ON#', 'sour=?': '*SOUR=HDMI#', 'ltim=?': '*LTIM=1500#' };
+  const bq = await serve((s) => { let buf = ''; s.on('error', () => {}); s.on('data', (d) => { buf += d.toString('latin1'); const mm = /\*([^#]+)#/.exec(buf); if (!mm) return; buf = ''; s.write(`>*${mm[1]}#\r\r\n${BQ[mm[1]] || '*Illegal format#'}\r\n`); }); });
+  r = await details({ 8000: bq.port });
+  m = r.matches[0];
+  assert.deepStrictEqual([m.profileId, m.fields.model, m.fields.power, m.fields.input, m.fields.lampHours], ['benq', 'LU935ST', 'On', 'HDMI', '1500']);
+  assert.strictEqual(mergeCommands(null, 'benq').mapping.powerOff.payload, '*pow=off#');
+  bq.close();
+  console.log('benq ok');
+
+  // ---------- Barco Pulse ----------
+  const BA = { 'system.serialnumber': '2590123456', 'system.modelname': 'UDX-4K32', 'system.firmwareversion': '2.4.19', 'system.state': 'on' };
+  const ba = await serve((s) => { s.on('error', () => {}); s.on('data', (d) => { const q = JSON.parse(d.toString()); s.write(JSON.stringify({ jsonrpc: '2.0', result: BA[q.params.property], id: q.id })); }); });
+  r = await details({ 9090: ba.port });
+  m = r.matches[0];
+  assert.deepStrictEqual([m.profileId, m.fields.serial, m.fields.model, m.fields.firmware, m.fields.state], ['barco', '2590123456', 'UDX-4K32', '2.4.19', 'on']);
+  ba.close();
+  console.log('barco ok');
+
   // ---------- unknown device + nothing there ----------
   const dumb = await serve((s) => { s.on('error', () => {}); s.write('hello\r\n'); });
   r = await details({ 23: dumb.port });

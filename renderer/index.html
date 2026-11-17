@@ -96,7 +96,7 @@
               </div>
             </form>
             <div class="chip-row" id="networkChips"></div>
-            <p class="dt-hint" id="scanHint">Ports are optional. With none entered, every address is pinged and 20 common AV ports are checked (Telnet, PJLink, Crestron, Extron, Q-SYS, Samsung, LG, Sony&hellip;). You can also type ports like <span class="mono">23, 80, 5000-5010</span>.</p>
+            <p class="dt-hint" id="scanHint">Ports are optional. With none entered, every address is pinged and the common AV control ports are checked (Telnet, PJLink, Crestron, Extron, Q-SYS, Samsung, LG, Sony&hellip;). You can also type ports like <span class="mono">23, 80, 5000-5010</span>.</p>
             <div id="scanProgress" class="scan-progress hidden">
               <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
               <span id="progressLabel">Scanning&hellip;</span>
@@ -112,7 +112,7 @@
             <label class="grow">IP address<input type="text" id="detailsIp" placeholder="192.168.1.50" autocomplete="off" spellcheck="false" required /></label>
             <button type="submit" class="btn btn-primary">Get details</button>
           </form>
-          <p class="dt-hint">Reads the MAC address, open control ports, model, serial number and firmware where the device reports them, and offers ready-made control commands for recognised devices (PJLink projectors, Samsung displays, Q-SYS, Extron, Crestron, AMX). You are asked for a login only if the device needs one.</p>
+          <p class="dt-hint">Reads the MAC address, open control ports, model, serial number and firmware where the device reports them, and offers ready-made control commands for recognised devices (PJLink, Epson, Panasonic, BenQ and Barco projectors, Samsung and LG displays, QSC Q-SYS, Lightware, Hikvision, Extron, Crestron, AMX). You are asked for a login only if the device needs one.</p>
         </div>
 
         <div class="panel">

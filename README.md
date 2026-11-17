@@ -106,7 +106,7 @@ renderer/               UI: index.html, styles.css, app.js, devices.js, console.
 
 ## Get device details
 
-On the Devices page, type an IP address and press **Get details** (or use the button on a saved device). The app reads the MAC address, open control ports and web page, then tries each built-in device profile: PJLink projectors, Samsung displays (MDC), QSC Q-SYS, Extron (SIS), Crestron and AMX consoles. A recognised device shows its model, serial number and firmware where it reports them, and its standard commands can be loaded into that device's Control buttons. If the device needs a login you are asked for it; it is used for that check only and never saved. Profiles live in `src/probe/profiles/`.
+On the Devices page, type an IP address and press **Get details** (or use the button on a saved device). The app reads the MAC address, open control ports and web page, then tries each built-in device profile: PJLink projectors, Epson (ESC/VP.net), Panasonic (NTCONTROL), BenQ and Barco (Pulse) projectors, Samsung displays (MDC), LG displays, QSC Q-SYS, Lightware (LW3), Hikvision cameras and recorders, Extron (SIS), Crestron and AMX consoles. A recognised device shows its model, serial number and firmware where it reports them, and its standard commands can be loaded into that device's Control buttons. If the device needs a login you are asked for it; it is used for that check only and never saved. Profiles live in `src/probe/profiles/`.
 
 ## Publishing updates
 

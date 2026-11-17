@@ -6,11 +6,11 @@ const { pingHost, readArpTable } = require('./ping');
 // Ports checked when the user leaves the port box empty. Covers the control
 // ports most AV gear listens on.
 const COMMON_AV_PORTS = [
-  [22, 'SSH'], [23, 'Telnet'], [80, 'HTTP'], [443, 'HTTPS'],
+  [22, 'SSH'], [23, 'Telnet'], [80, 'HTTP'], [443, 'HTTPS'], [1024, 'Panasonic'],
   [1319, 'AMX'], [1515, 'Samsung MDC'], [1702, 'Q-SYS'], [1710, 'Q-SYS'],
   [2202, 'Shure'], [3629, 'Epson ESC/VP.net'], [4352, 'PJLink'],
-  [5000, 'Kramer / generic'], [5678, 'PTZ VISCA'], [7142, 'NEC projector'],
-  [8080, 'HTTP alt'], [9761, 'LG display'], [20060, 'Sony BRAVIA'],
+  [5000, 'Kramer / generic'], [5678, 'PTZ VISCA'], [6107, 'Lightware LW3'], [7142, 'NEC projector'], [8000, 'BenQ'],
+  [8080, 'HTTP alt'], [9090, 'Barco'], [9761, 'LG display'], [20060, 'Sony BRAVIA'],
   [22023, 'Extron SSH'], [41794, 'Crestron CIP'], [41795, 'Crestron console'],
 ];
 const SERVICE_NAMES = Object.fromEntries(COMMON_AV_PORTS);
