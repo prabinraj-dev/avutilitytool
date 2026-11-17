@@ -35,6 +35,11 @@ contextBridge.exposeInMainWorld('api', {
   console: {
     send: (params) => ipcRenderer.invoke('console:send', params),
   },
+  probe: {
+    details: (params) => ipcRenderer.invoke('probe:details', params),
+    applyCommands: (params) => ipcRenderer.invoke('probe:applyCommands', params),
+    onProgress: subscribe('probe:progress'),
+  },
   link: {
     open: (cfg) => ipcRenderer.invoke('link:open', cfg),
     close: () => ipcRenderer.invoke('link:close'),

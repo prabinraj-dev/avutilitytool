@@ -8,7 +8,7 @@
     "dist": "electron-builder --win nsis --x64",
     "configure-updates": "node scripts/configure-updates.js",
     "release": "node scripts/release.js",
-    "test": "node test/update-source.test.js && node test/update-notes.test.js && node test/link.test.js"
+    "test": "node test/update-source.test.js && node test/update-notes.test.js && node test/link.test.js && node test/probe.test.js"
   },
   "author": "",
   "license": "UNLICENSED",

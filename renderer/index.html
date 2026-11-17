@@ -107,6 +107,15 @@
         </div>
 
         <div class="panel">
+          <h2 class="panel-title">Get device details</h2>
+          <form id="detailsForm" class="details-form">
+            <label class="grow">IP address<input type="text" id="detailsIp" placeholder="192.168.1.50" autocomplete="off" spellcheck="false" required /></label>
+            <button type="submit" class="btn btn-primary">Get details</button>
+          </form>
+          <p class="dt-hint">Reads the MAC address, open control ports, model, serial number and firmware where the device reports them, and offers ready-made control commands for recognised devices (PJLink projectors, Samsung displays, Q-SYS, Extron, Crestron, AMX). You are asked for a login only if the device needs one.</p>
+        </div>
+
+        <div class="panel">
           <h2 class="panel-title">Known devices <span class="count-pill" id="deviceCount">0</span></h2>
           <table class="device-table">
             <thead>
@@ -430,6 +439,7 @@
 
   <script src="app.js"></script>
   <script src="devices.js"></script>
+  <script src="details.js"></script>
   <script src="console.js"></script>
   <script src="control.js"></script>
   <script src="devicetest.js"></script>

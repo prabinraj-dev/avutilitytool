@@ -22,6 +22,7 @@ async function transmit(device, params) {
 const EDITABLE_SETTINGS = ['autoCheckUpdates']; // the update source is built in, not editable
 
 const { LinkManager } = require('./link');
+const { getDetails, mergeCommands } = require('./probe');
 
 function registerIpcHandlers({
   send, store, heartbeat, updater, applyTheme,
@@ -104,6 +105,38 @@ function registerIpcHandlers({
   ipcMain.handle('link:send', async (_e, params) => {
     try {
       return await link.send(buildFrame(params || {}));
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  // --- Get details: identify a device by IP (login is used for this request only, never stored) ---
+  ipcMain.handle('probe:details', async (_e, { ip, port, username, password }) => {
+    try {
+      const result = await getDetails({
+        ip: String(ip || '').trim(),
+        port,
+        creds: { username: username || '', password: password || '' },
+        onProgress: (progress) => send('probe:progress', progress),
+      });
+      return { success: true, result };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+  // Loads a recognised device type's ready-made commands into that device's Control buttons.
+  ipcMain.handle('probe:applyCommands', (_e, { deviceId, profileId, context, port }) => {
+    try {
+      const device = store.listDevices().find((d) => d.id === deviceId);
+      if (!device) return { success: false, error: 'Device not found' };
+      const { mapping, added, profile } = mergeCommands(store.getMapping(deviceId), profileId, context);
+      store.setMapping(deviceId, mapping);
+      let portChanged = false;
+      if (Number(port) && (Number(device.port) !== Number(port) || device.protocol !== profile.protocol)) {
+        store.updateDevice(deviceId, { port: Number(port), protocol: profile.protocol });
+        portChanged = true;
+      }
+      return { success: true, added, portChanged, port: Number(port) || device.port };
     } catch (err) {
       return { success: false, error: err.message };
     }

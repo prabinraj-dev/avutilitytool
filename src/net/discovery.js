@@ -206,4 +206,5 @@ async function scanRange({
 
 module.exports = {
   parseCidr, parseTarget, parsePorts, localNetworks, scanRange, ipToInt, intToIp, COMMON_AV_PORTS, DEFAULT_PORTS,
+  probePorts, reverseLookup, SERVICE_NAMES, isValidIp,
 };

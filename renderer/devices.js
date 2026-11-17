@@ -29,10 +29,16 @@
         <td>${esc(String(d.protocol).toUpperCase())}</td>
         <td>${esc(d.room) || '\u2014'}</td>
         <td>${d.lastSeen ? esc(new Date(d.lastSeen).toLocaleTimeString()) : '\u2014'}</td>
-        <td><button class="btn btn-ghost btn-sm remove-device" data-id="${esc(d.id)}">Remove</button></td>
+        <td class="row-actions"><button class="btn btn-secondary btn-sm details-device" data-id="${esc(d.id)}">Get details</button><button class="btn btn-ghost btn-sm remove-device" data-id="${esc(d.id)}">Remove</button></td>
       </tr>
     `).join('');
 
+    body.querySelectorAll('.details-device').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const device = AppState.devices.find((d) => d.id === btn.dataset.id);
+        if (device && window.DeviceDetails) window.DeviceDetails.open({ ip: device.ip, port: device.port, deviceId: device.id });
+      });
+    });
     body.querySelectorAll('.remove-device').forEach((btn) => {
       btn.addEventListener('click', async () => {
         await window.api.devices.remove(btn.dataset.id);

@@ -104,6 +104,10 @@ renderer/               UI: index.html, styles.css, app.js, devices.js, console.
 
 - **Automatic updates.** The app checks GitHub Releases at start and every hour, downloads new versions in the background, and installs them when you close it. A banner offers "Restart now" if you don't want to wait. Devices, mappings and settings are kept.
 
+## Get device details
+
+On the Devices page, type an IP address and press **Get details** (or use the button on a saved device). The app reads the MAC address, open control ports and web page, then tries each built-in device profile: PJLink projectors, Samsung displays (MDC), QSC Q-SYS, Extron (SIS), Crestron and AMX consoles. A recognised device shows its model, serial number and firmware where it reports them, and its standard commands can be loaded into that device's Control buttons. If the device needs a login you are asked for it; it is used for that check only and never saved. Profiles live in `src/probe/profiles/`.
+
 ## Publishing updates
 
 Pushing code does **not** publish. A release is created only on purpose: open the **Actions** tab, choose **Publish**, and press **Run workflow** (or push a tag such as `v1.0.0`). GitHub builds the Windows installer, numbers it automatically (`0.4.<run number>`; edit `version` in `package.json` to change the major/minor), writes release notes from the commit messages since the last release, and publishes it to GitHub Releases.

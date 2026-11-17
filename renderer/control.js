@@ -394,6 +394,9 @@
     });
     $('openMappingBtn').addEventListener('click', () => openMappingModal());
 
+    // Commands loaded from "Get details" on the Devices page
+    document.addEventListener('mappingchanged', (e) => { if (e.detail.deviceId === currentDeviceId) loadMapping(currentDeviceId); });
+
     $('editModeBtn').addEventListener('click', () => { editMode = !editMode; renderControls(); });
 
     Object.entries(BUTTONS).forEach(([id, key]) => {
