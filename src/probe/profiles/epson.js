@@ -44,7 +44,4 @@ module.exports = {
     } finally { s.close(); }
   },
 
-  commands: {
-    note: 'Epson’s own protocol needs a handshake before every command, which one-press buttons can’t do. Use the PJLink commands instead: Epson projectors answer PJLink on port 4352 (shown as a second result when it is enabled).',
-  },
 };

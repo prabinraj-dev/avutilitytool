@@ -1,0 +1,8 @@
+{
+  "id": "crestron",
+  "name": "Crestron control system (console)",
+  "protocol": "tcp",
+  "note": "Crestron control commands come from the program loaded on the processor, so there is no standard list. Enter the strings your program expects.",
+  "commands": {},
+  "models": {}
+}

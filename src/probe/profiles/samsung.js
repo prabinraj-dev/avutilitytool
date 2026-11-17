@@ -64,16 +64,4 @@ module.exports = {
     } finally { s.close(); }
   },
 
-  // Built for the display ID that answered.
-  buildCommands({ id = 0 } = {}) {
-    const h = (command, data) => hex(mdc(command, id, data));
-    return {
-      note: `Samsung MDC commands for display ID ${id}. Volume is set to fixed levels because each MDC frame carries its own checksum.`,
-      powerOn: cmd('Power on', h(0x11, [1]), HEX),
-      powerOff: cmd('Power off', h(0x11, [0]), HEX),
-      mute: cmd('Mute on', h(0x13, [1]), HEX),
-      sources: [[0x21, 'HDMI 1'], [0x23, 'HDMI 2'], [0x31, 'HDMI 3'], [0x25, 'DisplayPort'], [0x14, 'PC'], [0x18, 'DVI']].map(([v, label]) => cmd(label, h(0x14, [v]), HEX)),
-      custom: [cmd('Mute off', h(0x13, [0]), HEX), cmd('Volume 20', h(0x12, [20]), HEX), cmd('Volume 40', h(0x12, [40]), HEX), cmd('Volume 60', h(0x12, [60]), HEX), cmd('Status?', h(0x00), HEX), cmd('Serial number?', h(0x0b), HEX)],
-    };
-  },
 };

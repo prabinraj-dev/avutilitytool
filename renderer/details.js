@@ -53,17 +53,13 @@
     const rows = FIELD_ORDER.filter((k) => m.fields[k] !== undefined).map((k) => [FIELD_LABELS[k], esc(m.fields[k])]);
     Object.keys(m.fields).filter((k) => !FIELD_ORDER.includes(k)).forEach((k) => rows.push([k, esc(m.fields[k])]));
     rows.push(['Control port', `<span class="mono">${esc(m.port)}</span> (${esc(String(m.protocol).toUpperCase())})`]);
-    const device = current.deviceId ? AppState.devices.find((d) => d.id === current.deviceId) : null;
-    const loadLabel = device ? `Load ${m.commandCount} commands into Control buttons` : `Add as device and load ${m.commandCount} commands`;
     return `
       <div class="details-match">
         <h4><span>Recognised as: ${esc(m.name)}</span>${m.needsLogin ? '<span class="badge badge-warn"><i></i><span>Login needed</span></span>' : '<span class="badge badge-ok"><i></i><span>Identified</span></span>'}</h4>
         ${kv(rows)}
         ${m.needsLogin ? loginHtml(m.loginHint, m.loginFailed) : ''}
-        ${m.commandNote ? `<p class="dt-hint"><strong>Control commands:</strong> ${esc(m.commandNote)}</p>` : ''}
+        <div class="details-lookup" id="detailsLookup${i}"><p class="dt-hint">Looking up control commands online\u2026</p></div>
         <div class="details-actions">
-          ${m.commandCount ? `<button type="button" class="btn btn-primary load-commands" data-index="${i}">${esc(loadLabel)}</button>` : ''}
-          ${!device && !m.commandCount ? `<button type="button" class="btn btn-secondary load-commands" data-index="${i}">Add as device</button>` : ''}
           <button type="button" class="btn btn-ghost btn-sm toggle-raw" data-index="${i}">Show device replies</button>
         </div>
         <pre class="details-raw hidden" id="detailsRaw${i}">${esc(m.raw.join('\n'))}</pre>
@@ -91,7 +87,8 @@
     const none = result.matches.length ? '' : `
       <div class="details-match">
         <h4><span>Device type not recognised</span></h4>
-        <p class="dt-hint">The device did not answer any of the built-in identity checks, so its serial number and command list could not be read. You can still control it: add it as a device and enter its commands on the Control page, or test them in the Command Console.</p>
+        <p class="dt-hint">The device did not answer any of the built-in identity checks, so its model and serial number could not be read. You can still control it: add it as a device and enter its commands on the Control page, or test them in the Command Console.</p>
+        <div class="details-lookup" id="detailsLookupNone"></div>
         ${result.needsLogin ? loginHtml('Its web page asks for a user name and password.', false) : ''}
       </div>`;
     shell(`${summary}${result.matches.map(matchHtml).join('')}${none}
@@ -111,32 +108,78 @@
         btn.textContent = pre.classList.contains('hidden') ? 'Show device replies' : 'Hide device replies';
       });
     });
-    document.querySelectorAll('#detailsBody .load-commands').forEach((btn) => {
-      btn.addEventListener('click', () => loadCommands(result.matches[Number(btn.dataset.index)], btn));
-    });
+    result.matches.forEach((m, i) => lookupFor(m, $(`detailsLookup${i}`)));
+    if (!result.matches.length) {
+      const text = [result.vendor, (result.web[0] || {}).title].filter(Boolean).join(' ');
+      if (text) lookupFor({ fields: { manufacturer: result.vendor }, searchText: text, unrecognised: true }, $('detailsLookupNone'));
+    }
   }
 
-  async function loadCommands(match, btn) {
-    btn.disabled = true;
+  // Asks the online protocol library for this device's commands and shows the outcome.
+  async function lookupFor(m, el) {
+    if (!el) return;
+    const request = current;
+    const r = await window.api.probe.lookup({
+      profileId: m.profileId, manufacturer: m.fields.manufacturer, model: m.fields.model, context: m.context,
+    });
+    if (current !== request || !el.isConnected) return;
+    const searchText = m.searchText || [m.fields.manufacturer, m.fields.model].filter(Boolean).join(' ') || m.name;
+    const searchBtn = `<button type="button" class="btn btn-secondary btn-sm search-web">Search the web for its control protocol</button>`;
+    if (!r.online) {
+      el.innerHTML = '<p class="details-offline"><strong>No internet connection.</strong> Control commands are looked up online, so they can\u2019t be loaded right now. The details above were read directly from the device.</p>';
+      return;
+    }
+    if (r.found && r.count) {
+      const device = current.deviceId ? AppState.devices.find((d) => d.id === current.deviceId) : null;
+      const label = device ? `Load ${r.count} commands into Control buttons` : `Add as device and load ${r.count} commands`;
+      el.innerHTML = `${r.note ? `<p class="dt-hint"><strong>Control commands:</strong> ${esc(r.note)}</p>` : ''}
+        <div class="details-actions"><button type="button" class="btn btn-primary load-commands">${esc(label)}</button>${searchBtn}</div>`;
+      el.querySelector('.load-commands').addEventListener('click', (e) => loadCommands(m, e.currentTarget, r.port));
+    } else {
+      const why = r.found ? (r.note || 'This device has no fixed command list.') : (r.error || `${m.unrecognised ? 'This device' : 'This model'} is not in the protocol library yet.`);
+      el.innerHTML = `<p class="dt-hint">${esc(why)} You can look up its control protocol on the web and enter the commands on the Control page.</p>
+        <div class="details-actions">${!m.unrecognised && !(current.deviceId && AppState.devices.some((d) => d.id === current.deviceId)) ? '<button type="button" class="btn btn-secondary btn-sm add-only">Add as device</button>' : ''}${searchBtn}</div>`;
+      const add = el.querySelector('.add-only');
+      if (add) add.addEventListener('click', (e) => addOnly(m, e.currentTarget));
+    }
+    el.querySelector('.search-web').addEventListener('click', () => window.api.probe.searchWeb(searchText));
+  }
+
+  async function ensureDevice(m, port) {
     let deviceId = current.deviceId;
     if (!deviceId || !AppState.devices.some((d) => d.id === deviceId)) {
       const created = await window.api.devices.add({
-        name: match.fields.name || match.fields.model || match.fields.hostname || match.name,
+        name: m.fields.name || m.fields.model || m.fields.hostname || m.name,
         ip: current.ip,
-        port: match.port,
-        protocol: match.protocol,
+        port: port || m.port,
+        protocol: m.protocol,
         room: '',
       });
       deviceId = created.id;
       current.deviceId = deviceId;
     }
-    const res = await window.api.probe.applyCommands({ deviceId, profileId: match.profileId, context: match.context, port: match.port });
+    return deviceId;
+  }
+
+  async function addOnly(m, btn) {
+    btn.disabled = true;
+    await ensureDevice(m);
+    await refreshDevices();
+    btn.textContent = 'Added';
+  }
+
+  async function loadCommands(match, btn, port) {
+    btn.disabled = true;
+    const deviceId = await ensureDevice(match, port);
+    const res = await window.api.probe.applyCommands({
+      deviceId, profileId: match.profileId, manufacturer: match.fields.manufacturer, model: match.fields.model, context: match.context, port: match.port,
+    });
     await refreshDevices();
     document.dispatchEvent(new CustomEvent('mappingchanged', { detail: { deviceId } }));
     const note = $('detailsNote');
     if (!note) return;
     if (!res.success) { note.textContent = res.error || 'Could not load the commands.'; btn.disabled = false; return; }
-    note.textContent = `${res.added} command${res.added === 1 ? '' : 's'} added to this device’s Control buttons`
+    note.textContent = `${res.added} command${res.added === 1 ? '' : 's'} added to this device\u2019s Control buttons`
       + `${res.portChanged ? `, and its control port was set to ${res.port}` : ''}. Buttons you had already set up were left as they were.`;
     btn.textContent = 'Commands loaded';
   }

@@ -44,13 +44,4 @@ module.exports = {
     } finally { s.close(); }
   },
 
-  commands: {
-    note: 'Q-SYS controls are defined in your design. Replace YOUR_CONTROL with the Named Control from Q-SYS Designer.',
-    custom: [
-      cmd('Set control = 1', '{"jsonrpc":"2.0","id":1,"method":"Control.Set","params":{"Name":"YOUR_CONTROL","Value":1}}', NUL),
-      cmd('Set control = 0', '{"jsonrpc":"2.0","id":1,"method":"Control.Set","params":{"Name":"YOUR_CONTROL","Value":0}}', NUL),
-      cmd('Get control', '{"jsonrpc":"2.0","id":2,"method":"Control.Get","params":["YOUR_CONTROL"]}', NUL),
-      cmd('Core status?', '{"jsonrpc":"2.0","id":3,"method":"StatusGet","params":0}', NUL),
-    ],
-  },
 };

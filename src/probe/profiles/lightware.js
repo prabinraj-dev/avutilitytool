@@ -34,15 +34,4 @@ module.exports = {
     } finally { s.close(); }
   },
 
-  commands: {
-    note: 'LW3 commands for Lightware switchers and matrices. Input and output names (I1, O1) and paths differ between models, so check them against your model’s manual.',
-    mute: cmd('Mute output 1', 'CALL /MEDIA/VIDEO/XP:muteDestination(O1)', LW3),
-    sources: [1, 2, 3, 4].map((n) => cmd(`Input ${n} to output 1`, `CALL /MEDIA/VIDEO/XP:switch(I${n}:O1)`, LW3)),
-    custom: [
-      cmd('Unmute output 1', 'CALL /MEDIA/VIDEO/XP:unmuteDestination(O1)', LW3),
-      cmd('Current routing?', 'GET /MEDIA/VIDEO/XP.DestinationConnectionList', LW3),
-      cmd('Product name?', 'GET /.ProductName', LW3),
-      cmd('Serial number?', 'GET /.SerialNumber', LW3),
-    ],
-  },
 };

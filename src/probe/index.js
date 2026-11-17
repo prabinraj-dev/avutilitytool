@@ -17,6 +17,7 @@ const PROFILES = [
   require('./profiles/lightware'),
   require('./profiles/lg'),
   require('./profiles/hikvision'),
+  require('./profiles/sony'),
   require('./profiles/extron'),
   require('./profiles/crestron'),
   require('./profiles/amx'),
@@ -79,16 +80,6 @@ function rawHttp(ip, port, secure, path, headers) {
   });
 }
 
-function profileCommands(profile, context) {
-  return profile.buildCommands ? profile.buildCommands(context || {}) : (profile.commands || {});
-}
-
-// Counts the ready-made commands in a profile's template.
-function commandCount(commands) {
-  const fixed = ['powerOn', 'powerOff', 'volumeUp', 'volumeDown', 'mute', 'volumeSet'].filter((k) => commands[k]).length;
-  return fixed + (commands.sources || []).length + (commands.custom || []).length;
-}
-
 // Gathers everything we can learn about one IP address.
 // creds: { username, password } typed by the user for this request only (never stored).
 async function getDetails({
@@ -133,7 +124,6 @@ async function getDetails({
       const request = (p, path, headers) => rawHttp(ip, real(p), p === 443 || p === 8443, path, headers);
       const found = await withTimeout(profile.identify({ open: open1, request, creds, openPorts: openList }), 15000, profile.name);
       if (!found || !found.matched) continue;
-      const commands = profileCommands(profile, found.context);
       result.matches.push({
         profileId: profile.id,
         name: profile.name,
@@ -145,8 +135,6 @@ async function getDetails({
         loginFailed: !!found.loginFailed,
         loginHint: profile.loginHint || '',
         context: found.context || {},
-        commandNote: commands.note || '',
-        commandCount: commandCount(commands),
       });
     } catch (e) { /* this profile didn't answer; try the next */ }
   }
@@ -162,12 +150,9 @@ async function getDetails({
   return result;
 }
 
-// Merges a profile's ready-made commands into a device's saved buttons without
+// Merges a downloaded command set into a device's saved buttons without
 // overwriting anything the user already entered.
-function mergeCommands(existing, profileId, context) {
-  const profile = PROFILES.find((p) => p.id === profileId);
-  if (!profile) throw new Error('Unknown device type');
-  const template = profileCommands(profile, context);
+function mergeCommands(existing, template) {
   const mapping = JSON.parse(JSON.stringify(existing || {}));
   const has = (c) => !!(c && c.payload && String(c.payload).trim());
   let added = 0;
@@ -190,7 +175,7 @@ function mergeCommands(existing, profileId, context) {
   for (let i = mapping.custom.length; i < 12; i += 1) {
     mapping.custom.push({ label: `Button ${i + 1}`, payload: '', encoding: 'ascii', delimiter: 'crlf', delimiterCustom: '', delimiterEncoding: 'text' });
   }
-  return { mapping, added, profile };
+  return { mapping, added };
 }
 
 module.exports = { getDetails, mergeCommands, PROFILES };

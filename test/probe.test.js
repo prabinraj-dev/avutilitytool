@@ -2,7 +2,24 @@
 const assert = require('assert');
 const net = require('net');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const { getDetails, mergeCommands } = require('../src/probe');
+const { createLibrary, prepareCommands, OfflineError } = require('../src/probe/library');
+
+// The online library, served from the repo's protocols/ folder for the tests.
+const LIB = path.join(__dirname, '..', 'protocols');
+const library = createLibrary({
+  baseUrl: 'lib://',
+  fetchText: async (url) => {
+    const file = path.join(LIB, url.replace('lib://', ''));
+    return fs.existsSync(file) ? { status: 200, text: fs.readFileSync(file, 'utf8') } : { status: 404, text: '' };
+  },
+});
+const libMerge = async (existing, profileId, context, extra = {}) => {
+  const entry = await library.lookup({ profileId, ...extra });
+  return mergeCommands(existing, prepareCommands(entry.commands, context));
+};
 
 function serve(onConnect) {
   return new Promise((resolve) => {
@@ -26,7 +43,7 @@ const details = (ports, creds) => getDetails({ ip: '127.0.0.1', creds, skipSyste
   assert.strictEqual(m.profileId, 'pjlink');
   assert.deepStrictEqual([m.fields.manufacturer, m.fields.model, m.fields.serial, m.fields.firmware, m.fields.power, m.fields.name], ['EPSON', 'EB-L630U', 'X4HF1234567', '1.05', 'On', 'Boardroom PJ']);
   assert.ok(!('info' in m.fields), 'error replies are not shown as values');
-  assert.ok(m.commandCount >= 10 && !r.needsLogin);
+  assert.ok(!r.needsLogin);
   pj.close();
   console.log('pjlink ok');
 
@@ -101,7 +118,7 @@ const details = (ports, creds) => getDetails({ ip: '127.0.0.1', creds, skipSyste
   r = await details({ 1515: sm.port });
   m = r.matches[0];
   assert.deepStrictEqual([m.profileId, m.fields.serial, m.fields.model, m.fields.power, m.fields.input, m.fields.displayId], ['samsung-mdc', '0ABC3HDN123456', 'QM55R', 'On', 'HDMI 1', '1']);
-  const merged = mergeCommands(null, 'samsung-mdc', m.context);
+  const merged = await libMerge(null, 'samsung-mdc', m.context);
   assert.strictEqual(merged.mapping.powerOn.payload, 'AA 11 01 01 01 14', 'power-on frame with correct checksum for ID 1');
   assert.strictEqual(merged.mapping.powerOff.payload, 'AA 11 01 01 00 13');
   assert.strictEqual(merged.mapping.sources[0].payload, 'AA 14 01 01 21 37');
@@ -163,7 +180,7 @@ const details = (ports, creds) => getDetails({ ip: '127.0.0.1', creds, skipSyste
   r = await details({ 9761: lg.port });
   m = r.matches[0];
   assert.deepStrictEqual([m.profileId, m.fields.serial, m.fields.firmware, m.fields.power, m.fields.input, m.fields.volume], ['lg', '805KCRN1A234', '041030', 'On', 'HDMI 1', '20']);
-  assert.strictEqual(mergeCommands(null, 'lg').mapping.powerOn.payload, 'ka 01 01');
+  assert.strictEqual((await libMerge(null, 'lg')).mapping.powerOn.payload, 'ka 01 01');
   lg.close();
   console.log('lg ok');
 
@@ -252,7 +269,7 @@ const details = (ports, creds) => getDetails({ ip: '127.0.0.1', creds, skipSyste
   r = await details({ 8000: bq.port });
   m = r.matches[0];
   assert.deepStrictEqual([m.profileId, m.fields.model, m.fields.power, m.fields.input, m.fields.lampHours], ['benq', 'LU935ST', 'On', 'HDMI', '1500']);
-  assert.strictEqual(mergeCommands(null, 'benq').mapping.powerOff.payload, '*pow=off#');
+  assert.strictEqual((await libMerge(null, 'benq')).mapping.powerOff.payload, '*pow=off#');
   bq.close();
   console.log('benq ok');
 
@@ -275,13 +292,65 @@ const details = (ports, creds) => getDetails({ ip: '127.0.0.1', creds, skipSyste
 
   // ---------- merging keeps what the user already entered ----------
   const mine = { powerOn: { label: 'Projector ON', payload: 'MY PWR', encoding: 'ascii', delimiter: 'cr' }, sources: [{ label: 'HDMI 1', payload: 'MINE' }, { label: 'HDMI 2', payload: '' }], custom: [{ label: 'Lights', payload: 'lightson' }, { label: 'Button 2', payload: '' }] };
-  const out = mergeCommands(mine, 'pjlink').mapping;
+  const out = (await libMerge(mine, 'pjlink')).mapping;
   assert.strictEqual(out.powerOn.payload, 'MY PWR'); assert.strictEqual(out.powerOn.label, 'Projector ON');
   assert.strictEqual(out.powerOff.payload, '%1POWR 0');
   assert.strictEqual(out.sources.find((s) => s.label === 'HDMI 1').payload, 'MINE');
   assert.strictEqual(out.sources.find((s) => s.label === 'HDMI 2').payload, '%1INPT 32');
   assert.strictEqual(out.custom[0].payload, 'lightson');
   assert.ok(out.custom.length >= 12 && out.custom.some((c) => c.label === 'Lamp hours?'));
+
+  // ---------- Sony BRAVIA (Simple IP Control) ----------
+  const sony = await serve((s) => {
+    lines(s, (l) => {
+      const fn = l.slice(3, 7);
+      if (l.startsWith('*SEPOWR')) s.write('*SAPOWR0000000000000001\n');
+      else if (l.startsWith('*SEMADR')) s.write('*SAMADRaabbccddeeff####\n');
+      else if (l.startsWith('*SEINPT')) s.write('*SAINPT0000000100000002\n');
+      else if (l.startsWith('*SEVOLU')) s.write('*SAVOLU0000000000000025\n');
+      else s.write(`*SA${fn}FFFFFFFFFFFFFFFF\n`);
+    }, '\n');
+  });
+  r = await details({ 20060: sony.port });
+  m = r.matches[0];
+  assert.deepStrictEqual([m.profileId, m.fields.power, m.fields.mac, m.fields.input, m.fields.volume], ['sony', 'On', 'AA:BB:CC:DD:EE:FF', 'HDMI 2', '25']);
+  const sonyCmds = (await libMerge(null, 'sony')).mapping;
+  assert.strictEqual(sonyCmds.powerOn.payload.length, 23, 'Sony frames are 24 bytes with the LF ending');
+  assert.strictEqual(sonyCmds.powerOn.delimiter, 'lf');
+  sony.close();
+  console.log('sony ok');
+
+  // ---------- online library ----------
+  const epsonLib = await library.lookup({ profileId: 'epson', model: 'EB-L630U' });
+  assert.strictEqual(epsonLib.port, 4352, 'Epson buttons use PJLink port');
+  assert.strictEqual(prepareCommands(epsonLib.commands).powerOn.payload, '%1POWR 1');
+  const byMaker = await library.lookup({ manufacturer: 'LG Electronics' });
+  assert.strictEqual(byMaker.id, 'lg', 'found by manufacturer name when no profile id');
+  assert.strictEqual(await library.lookup({ manufacturer: 'Unknown brand' }), null);
+  const traversal = createLibrary({ baseUrl: 'x://', fetchText: async (u) => (u.endsWith('index.json') ? { status: 200, text: JSON.stringify({ profiles: { evil: '../../secret.json' } }) } : { status: 200, text: '{}' }) });
+  assert.strictEqual(await traversal.lookup({ profileId: 'evil' }), null, 'only plain file names are fetched');
+  // model-specific override: longest prefix wins
+  const ov = createLibrary({ baseUrl: 'x://', fetchText: async (u) => (u.endsWith('index.json')
+    ? { status: 200, text: JSON.stringify({ profiles: { p: 'p.json' } }) }
+    : { status: 200, text: JSON.stringify({ id: 'p', port: 23, commands: { powerOn: { label: 'On', payload: 'A' } }, models: { 'EB-': { port: 4352 }, 'EB-L6': { commands: { powerOn: { label: 'On', payload: 'B' } } } } }) }) });
+  const o = await ov.lookup({ profileId: 'p', model: 'eb-l630u' });
+  assert.deepStrictEqual([o.matchedModel, o.port, o.commands.powerOn.payload], ['EB-L6', 23, 'B']);
+  // no internet
+  const offline = createLibrary({ baseUrl: 'x://', fetchText: async () => { throw new Error('getaddrinfo ENOTFOUND'); } });
+  await assert.rejects(() => offline.lookup({ profileId: 'pjlink' }), (e) => e instanceof OfflineError);
+  // untrusted library content is cleaned
+  const cleaned = prepareCommands({ powerOn: { label: 'x'.repeat(99), payload: 'P', encoding: 'evil', delimiter: 'zz' }, sources: [{ nope: 1 }, { label: 'S', payload: 'Q' }] });
+  assert.deepStrictEqual([cleaned.powerOn.label.length, cleaned.powerOn.encoding, cleaned.powerOn.delimiter, cleaned.sources.length], [40, 'ascii', 'cr', 1]);
+  // every library file is valid and has a matching identity check in the app
+  const idx = JSON.parse(fs.readFileSync(path.join(LIB, 'index.json'), 'utf8'));
+  const { PROFILES } = require('../src/probe');
+  Object.entries(idx.profiles).forEach(([id, file]) => {
+    const entry = JSON.parse(fs.readFileSync(path.join(LIB, file), 'utf8'));
+    assert.ok(PROFILES.some((p) => p.id === id), `profile ${id} exists in the app`);
+    assert.strictEqual(entry.id, id);
+  });
+  assert.ok(PROFILES.every((p) => !p.commands && !p.buildCommands), 'no command sets are built into the app');
+  console.log('library ok');
 
   console.log('probe: all tests passed');
   process.exit(0);

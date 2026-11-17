@@ -1,0 +1,125 @@
+{
+  "id": "lg",
+  "name": "LG display (network control)",
+  "protocol": "tcp",
+  "note": "LG display commands for Set ID 01. Network control (and Wake on LAN for power on) must be enabled in the display menu.",
+  "commands": {
+    "powerOn": {
+      "label": "Power on",
+      "payload": "ka 01 01",
+      "encoding": "ascii",
+      "delimiter": "cr",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "powerOff": {
+      "label": "Power off",
+      "payload": "ka 01 00",
+      "encoding": "ascii",
+      "delimiter": "cr",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "mute": {
+      "label": "Mute on",
+      "payload": "ke 01 00",
+      "encoding": "ascii",
+      "delimiter": "cr",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "sources": [
+      {
+        "label": "HDMI 1",
+        "payload": "xb 01 90",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "HDMI 2",
+        "payload": "xb 01 91",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "DisplayPort",
+        "payload": "xb 01 c0",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "DVI",
+        "payload": "xb 01 70",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "OPS",
+        "payload": "xb 01 98",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ],
+    "custom": [
+      {
+        "label": "Mute off",
+        "payload": "ke 01 01",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Volume 20",
+        "payload": "kf 01 14",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Volume 40",
+        "payload": "kf 01 28",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Volume 60",
+        "payload": "kf 01 3c",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Power status?",
+        "payload": "ka 01 ff",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Serial number?",
+        "payload": "fy 01 ff",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ]
+  },
+  "models": {}
+}

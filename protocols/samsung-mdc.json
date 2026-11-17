@@ -1,0 +1,133 @@
+{
+  "id": "samsung-mdc",
+  "name": "Samsung display (MDC)",
+  "protocol": "tcp",
+  "note": "Samsung MDC commands. {id} is replaced with the display ID that answered, and {cs} with the checksum.",
+  "commands": {
+    "powerOn": {
+      "label": "Power on",
+      "payload": "AA 11 {id} 01 01 {cs}",
+      "encoding": "hex",
+      "delimiter": "none",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "powerOff": {
+      "label": "Power off",
+      "payload": "AA 11 {id} 01 00 {cs}",
+      "encoding": "hex",
+      "delimiter": "none",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "mute": {
+      "label": "Mute on",
+      "payload": "AA 13 {id} 01 01 {cs}",
+      "encoding": "hex",
+      "delimiter": "none",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "sources": [
+      {
+        "label": "HDMI 1",
+        "payload": "AA 14 {id} 01 21 {cs}",
+        "encoding": "hex",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "HDMI 2",
+        "payload": "AA 14 {id} 01 23 {cs}",
+        "encoding": "hex",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "HDMI 3",
+        "payload": "AA 14 {id} 01 31 {cs}",
+        "encoding": "hex",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "DisplayPort",
+        "payload": "AA 14 {id} 01 25 {cs}",
+        "encoding": "hex",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "PC",
+        "payload": "AA 14 {id} 01 14 {cs}",
+        "encoding": "hex",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "DVI",
+        "payload": "AA 14 {id} 01 18 {cs}",
+        "encoding": "hex",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ],
+    "custom": [
+      {
+        "label": "Mute off",
+        "payload": "AA 13 {id} 01 00 {cs}",
+        "encoding": "hex",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Volume 20",
+        "payload": "AA 12 {id} 01 14 {cs}",
+        "encoding": "hex",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Volume 40",
+        "payload": "AA 12 {id} 01 28 {cs}",
+        "encoding": "hex",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Volume 60",
+        "payload": "AA 12 {id} 01 3C {cs}",
+        "encoding": "hex",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Status?",
+        "payload": "AA 00 {id} 00 {cs}",
+        "encoding": "hex",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Serial number?",
+        "payload": "AA 0B {id} 00 {cs}",
+        "encoding": "hex",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ]
+  },
+  "models": {}
+}

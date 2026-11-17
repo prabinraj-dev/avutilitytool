@@ -38,6 +38,8 @@ contextBridge.exposeInMainWorld('api', {
   probe: {
     details: (params) => ipcRenderer.invoke('probe:details', params),
     applyCommands: (params) => ipcRenderer.invoke('probe:applyCommands', params),
+    lookup: (params) => ipcRenderer.invoke('probe:lookup', params),
+    searchWeb: (text) => ipcRenderer.invoke('probe:searchWeb', { text }),
     onProgress: subscribe('probe:progress'),
   },
   link: {

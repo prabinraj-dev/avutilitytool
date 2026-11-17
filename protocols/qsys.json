@@ -1,0 +1,43 @@
+{
+  "id": "qsys",
+  "name": "QSC Q-SYS Core (QRC)",
+  "protocol": "tcp",
+  "note": "Q-SYS controls are defined in your design. Replace YOUR_CONTROL with the Named Control from Q-SYS Designer.",
+  "commands": {
+    "custom": [
+      {
+        "label": "Set control = 1",
+        "payload": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"Control.Set\",\"params\":{\"Name\":\"YOUR_CONTROL\",\"Value\":1}}",
+        "encoding": "ascii",
+        "delimiter": "custom",
+        "delimiterCustom": "00",
+        "delimiterEncoding": "hex"
+      },
+      {
+        "label": "Set control = 0",
+        "payload": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"Control.Set\",\"params\":{\"Name\":\"YOUR_CONTROL\",\"Value\":0}}",
+        "encoding": "ascii",
+        "delimiter": "custom",
+        "delimiterCustom": "00",
+        "delimiterEncoding": "hex"
+      },
+      {
+        "label": "Get control",
+        "payload": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"Control.Get\",\"params\":[\"YOUR_CONTROL\"]}",
+        "encoding": "ascii",
+        "delimiter": "custom",
+        "delimiterCustom": "00",
+        "delimiterEncoding": "hex"
+      },
+      {
+        "label": "Core status?",
+        "payload": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"StatusGet\",\"params\":0}",
+        "encoding": "ascii",
+        "delimiter": "custom",
+        "delimiterCustom": "00",
+        "delimiterEncoding": "hex"
+      }
+    ]
+  },
+  "models": {}
+}

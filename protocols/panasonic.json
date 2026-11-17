@@ -1,0 +1,117 @@
+{
+  "id": "panasonic",
+  "name": "Panasonic projector / display (NTCONTROL)",
+  "protocol": "tcp",
+  "note": "Panasonic NTCONTROL commands. They work from buttons only when command control runs without protection (set \"Command protect\" to off on the projector); the serial number is not available over this protocol.",
+  "commands": {
+    "powerOn": {
+      "label": "Power on",
+      "payload": "00PON",
+      "encoding": "ascii",
+      "delimiter": "cr",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "powerOff": {
+      "label": "Power off",
+      "payload": "00POF",
+      "encoding": "ascii",
+      "delimiter": "cr",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "mute": {
+      "label": "Shutter / AV mute on",
+      "payload": "00OSH:1",
+      "encoding": "ascii",
+      "delimiter": "cr",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "sources": [
+      {
+        "label": "HDMI 1",
+        "payload": "00IIS:HD1",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "HDMI 2",
+        "payload": "00IIS:HD2",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "RGB 1",
+        "payload": "00IIS:RG1",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "DVI",
+        "payload": "00IIS:DVI",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Digital Link",
+        "payload": "00IIS:DL1",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ],
+    "custom": [
+      {
+        "label": "Shutter / AV mute off",
+        "payload": "00OSH:0",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Power status?",
+        "payload": "00QPW",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Input status?",
+        "payload": "00QIN",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Volume up",
+        "payload": "00AUU",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Volume down",
+        "payload": "00AUD",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ]
+  },
+  "models": {}
+}

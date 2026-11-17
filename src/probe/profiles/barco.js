@@ -47,17 +47,4 @@ module.exports = {
     } finally { s.close(); }
   },
 
-  commands: {
-    note: 'Barco Pulse JSON-RPC commands. Source names differ between models; read the list with the "Available sources?" button and adjust.',
-    powerOn: cmd('Power on', rpc(1, 'system.poweron'), J),
-    powerOff: cmd('Power off', rpc(1, 'system.poweroff'), J),
-    mute: cmd('Shutter close', rpc(1, 'property.set', { property: 'optics.shutter.target', value: 'Closed' }), J),
-    sources: ['HDMI', 'DisplayPort', 'HDBaseT', 'SDI'].map((src) => cmd(src, rpc(1, 'property.set', { property: 'image.window.main.source', value: src }), J)),
-    custom: [
-      cmd('Shutter open', rpc(1, 'property.set', { property: 'optics.shutter.target', value: 'Open' }), J),
-      cmd('Projector state?', rpc(1, 'property.get', { property: 'system.state' }), J),
-      cmd('Available sources?', rpc(1, 'image.source.list'), J),
-      cmd('Serial number?', rpc(1, 'property.get', { property: 'system.serialnumber' }), J),
-    ],
-  },
 };

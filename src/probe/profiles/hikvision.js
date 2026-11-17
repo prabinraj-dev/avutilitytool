@@ -67,7 +67,4 @@ module.exports = {
     return { matched: true, port, fields, raw };
   },
 
-  commands: {
-    note: 'Hikvision devices are controlled through their web API with a login, not with raw command strings, so there are no buttons to load. The details above are read-only.',
-  },
 };

@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "about": "AV Control Utility protocol library. One file per device family. The app downloads only the file for the device it finds.",
+  "profiles": {
+    "pjlink": "pjlink.json",
+    "epson": "epson.json",
+    "panasonic": "panasonic.json",
+    "benq": "benq.json",
+    "barco": "barco.json",
+    "samsung-mdc": "samsung-mdc.json",
+    "qsys": "qsys.json",
+    "lightware": "lightware.json",
+    "lg": "lg.json",
+    "hikvision": "hikvision.json",
+    "sony": "sony.json",
+    "extron": "extron.json",
+    "crestron": "crestron.json",
+    "amx": "amx.json"
+  },
+  "manufacturers": {
+    "epson": "epson.json",
+    "panasonic": "panasonic.json",
+    "benq": "benq.json",
+    "barco": "barco.json",
+    "samsung": "samsung-mdc.json",
+    "qsc": "qsys.json",
+    "q-sys": "qsys.json",
+    "lightware": "lightware.json",
+    "lg": "lg.json",
+    "lg electronics": "lg.json",
+    "hikvision": "hikvision.json",
+    "sony": "sony.json",
+    "extron": "extron.json",
+    "crestron": "crestron.json",
+    "amx": "amx.json",
+    "harman amx": "amx.json"
+  }
+}

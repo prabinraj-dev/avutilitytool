@@ -22,7 +22,20 @@ async function transmit(device, params) {
 const EDITABLE_SETTINGS = ['autoCheckUpdates']; // the update source is built in, not editable
 
 const { LinkManager } = require('./link');
+const fs = require('fs');
+const path = require('path');
+const { net, shell } = require('electron');
 const { getDetails, mergeCommands } = require('./probe');
+const { createLibrary, prepareCommands, countCommands, OfflineError } = require('./probe/library');
+
+// Where the online protocol library lives (the repo built into the app; not shown in the UI).
+function libraryBaseUrl() {
+  try {
+    const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, 'update-config.json'), 'utf8'));
+    if (/^[\w.-]+\/[\w.-]+$/.test(cfg.repo || '')) return `https://raw.githubusercontent.com/${cfg.repo}/${cfg.libraryBranch || 'AV-Code'}/protocols/`;
+  } catch (e) { /* not configured */ }
+  return '';
+}
 
 function registerIpcHandlers({
   send, store, heartbeat, updater, applyTheme,
@@ -124,22 +137,67 @@ function registerIpcHandlers({
       return { success: false, error: err.message };
     }
   });
-  // Loads a recognised device type's ready-made commands into that device's Control buttons.
-  ipcMain.handle('probe:applyCommands', (_e, { deviceId, profileId, context, port }) => {
+  // Looks up a device's control commands in the online protocol library.
+  const library = createLibrary({
+    baseUrl: libraryBaseUrl(),
+    fetchText: async (url) => {
+      const res = await net.fetch(url, { cache: 'no-store' });
+      return { status: res.status, text: await res.text() };
+    },
+  });
+  const lookupCommands = async ({ profileId, manufacturer, model, context }) => {
+    if (!libraryBaseUrl()) return { online: true, found: false };
+    try {
+      const entry = await library.lookup({ profileId, manufacturer, model });
+      if (!entry) return { online: true, found: false };
+      const commands = prepareCommands(entry.commands, context);
+      return {
+        online: true, found: true, entry, commands, count: countCommands(commands),
+      };
+    } catch (err) {
+      if (err instanceof OfflineError) return { online: false, found: false };
+      return { online: true, found: false, error: err.message };
+    }
+  };
+  ipcMain.handle('probe:lookup', async (_e, params) => {
+    const r = await lookupCommands(params || {});
+    return {
+      online: r.online, found: r.found, error: r.error || '', count: r.count || 0,
+      note: r.found ? r.entry.note : '', port: r.found ? r.entry.port : null, matchedModel: r.found ? r.entry.matchedModel : '',
+    };
+  });
+  // Loads the looked-up commands into that device's Control buttons.
+  ipcMain.handle('probe:applyCommands', async (_e, {
+    deviceId, profileId, manufacturer, model, context, port,
+  }) => {
     try {
       const device = store.listDevices().find((d) => d.id === deviceId);
       if (!device) return { success: false, error: 'Device not found' };
-      const { mapping, added, profile } = mergeCommands(store.getMapping(deviceId), profileId, context);
+      const r = await lookupCommands({ profileId, manufacturer, model, context });
+      if (!r.online) return { success: false, error: 'No internet connection. Connect to the internet and try again.' };
+      if (!r.found) return { success: false, error: r.error || 'No commands for this device in the protocol library yet.' };
+      const { mapping, added } = mergeCommands(store.getMapping(deviceId), r.commands);
       store.setMapping(deviceId, mapping);
+      const usePort = Number(r.entry.port) || Number(port) || device.port;
+      const protocol = r.entry.protocol === 'udp' ? 'udp' : 'tcp';
       let portChanged = false;
-      if (Number(port) && (Number(device.port) !== Number(port) || device.protocol !== profile.protocol)) {
-        store.updateDevice(deviceId, { port: Number(port), protocol: profile.protocol });
+      if (Number(device.port) !== usePort || device.protocol !== protocol) {
+        store.updateDevice(deviceId, { port: usePort, protocol });
         portChanged = true;
       }
-      return { success: true, added, portChanged, port: Number(port) || device.port };
+      return {
+        success: true, added, portChanged, port: usePort,
+      };
     } catch (err) {
       return { success: false, error: err.message };
     }
+  });
+  // Opens a web search for the device's control protocol in the user's browser.
+  ipcMain.handle('probe:searchWeb', (_e, { text }) => {
+    const q = String(text || '').replace(/[^\w .+\-/]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+    if (!q) return false;
+    shell.openExternal(`https://www.google.com/search?q=${encodeURIComponent(`${q} RS232 LAN control protocol commands`)}`);
+    return true;
   });
 
   // --- Command mapping matrix -------------------------------------------------------

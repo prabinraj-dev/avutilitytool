@@ -1,0 +1,134 @@
+{
+  "id": "epson",
+  "name": "Epson projector (ESC/VP.net)",
+  "protocol": "tcp",
+  "note": "Epson projectors are controlled with PJLink on port 4352 (the buttons will use that port). Turn PJLink on in the projector network menu, with no PJLink password.",
+  "port": 4352,
+  "commands": {
+    "powerOn": {
+      "label": "Power on",
+      "payload": "%1POWR 1",
+      "encoding": "ascii",
+      "delimiter": "cr",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "powerOff": {
+      "label": "Power off",
+      "payload": "%1POWR 0",
+      "encoding": "ascii",
+      "delimiter": "cr",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "volumeUp": {
+      "label": "",
+      "payload": "%2SVOL 1",
+      "encoding": "ascii",
+      "delimiter": "cr",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "volumeDown": {
+      "label": "",
+      "payload": "%2SVOL 0",
+      "encoding": "ascii",
+      "delimiter": "cr",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "mute": {
+      "label": "AV mute on",
+      "payload": "%1AVMT 31",
+      "encoding": "ascii",
+      "delimiter": "cr",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "sources": [
+      {
+        "label": "HDMI 1",
+        "payload": "%1INPT 31",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "HDMI 2",
+        "payload": "%1INPT 32",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "RGB 1",
+        "payload": "%1INPT 11",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Video 1",
+        "payload": "%1INPT 21",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Network",
+        "payload": "%1INPT 51",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ],
+    "custom": [
+      {
+        "label": "AV mute off",
+        "payload": "%1AVMT 30",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Power status?",
+        "payload": "%1POWR ?",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Input status?",
+        "payload": "%1INPT ?",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Lamp hours?",
+        "payload": "%1LAMP ?",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Error status?",
+        "payload": "%1ERST ?",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ]
+  },
+  "models": {}
+}

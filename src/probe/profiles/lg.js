@@ -37,12 +37,4 @@ module.exports = {
     } finally { s.close(); }
   },
 
-  commands: {
-    note: 'LG display commands for Set ID 01. Network control (and Wake on LAN for power on) must be enabled in the display menu.',
-    powerOn: cmd('Power on', 'ka 01 01'),
-    powerOff: cmd('Power off', 'ka 01 00'),
-    mute: cmd('Mute on', 'ke 01 00'),
-    sources: [cmd('HDMI 1', 'xb 01 90'), cmd('HDMI 2', 'xb 01 91'), cmd('DisplayPort', 'xb 01 c0'), cmd('DVI', 'xb 01 70'), cmd('OPS', 'xb 01 98')],
-    custom: [cmd('Mute off', 'ke 01 01'), cmd('Volume 20', 'kf 01 14'), cmd('Volume 40', 'kf 01 28'), cmd('Volume 60', 'kf 01 3c'), cmd('Power status?', 'ka 01 ff'), cmd('Serial number?', 'fy 01 ff')],
-  },
 };

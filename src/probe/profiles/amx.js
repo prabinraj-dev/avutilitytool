@@ -43,7 +43,4 @@ module.exports = {
     } finally { s.close(); }
   },
 
-  commands: {
-    note: 'AMX control strings are defined by the NetLinx program on the master, so there is no standard list. Enter the strings your program expects.',
-  },
 };

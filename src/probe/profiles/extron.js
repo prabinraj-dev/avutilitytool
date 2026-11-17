@@ -45,12 +45,4 @@ module.exports = {
     } finally { s.close(); }
   },
 
-  commands: {
-    note: 'Typical SIS commands for Extron switchers. SIS commands differ between models, so check them against your model’s manual.',
-    mute: cmd('Audio mute on', '1Z', { delimiter: 'none' }),
-    volumeUp: cmd('', '+V', { delimiter: 'none' }),
-    volumeDown: cmd('', '-V', { delimiter: 'none' }),
-    sources: [1, 2, 3, 4].map((n) => cmd(`Input ${n}`, `${n}!`, { delimiter: 'none' })),
-    custom: [cmd('Audio mute off', '0Z', { delimiter: 'none' }), cmd('Firmware?', 'Q', { delimiter: 'none' }), cmd('Part number?', 'N', { delimiter: 'none' }), cmd('Current input?', '!', { delimiter: 'none' })],
-  },
 };

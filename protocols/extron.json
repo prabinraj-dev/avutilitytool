@@ -1,0 +1,101 @@
+{
+  "id": "extron",
+  "name": "Extron (SIS)",
+  "protocol": "tcp",
+  "note": "Typical SIS commands for Extron switchers. SIS commands differ between models, so check them against your model’s manual.",
+  "commands": {
+    "volumeUp": {
+      "label": "",
+      "payload": "+V",
+      "encoding": "ascii",
+      "delimiter": "none",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "volumeDown": {
+      "label": "",
+      "payload": "-V",
+      "encoding": "ascii",
+      "delimiter": "none",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "mute": {
+      "label": "Audio mute on",
+      "payload": "1Z",
+      "encoding": "ascii",
+      "delimiter": "none",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "sources": [
+      {
+        "label": "Input 1",
+        "payload": "1!",
+        "encoding": "ascii",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Input 2",
+        "payload": "2!",
+        "encoding": "ascii",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Input 3",
+        "payload": "3!",
+        "encoding": "ascii",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Input 4",
+        "payload": "4!",
+        "encoding": "ascii",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ],
+    "custom": [
+      {
+        "label": "Audio mute off",
+        "payload": "0Z",
+        "encoding": "ascii",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Firmware?",
+        "payload": "Q",
+        "encoding": "ascii",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Part number?",
+        "payload": "N",
+        "encoding": "ascii",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Current input?",
+        "payload": "!",
+        "encoding": "ascii",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ]
+  },
+  "models": {}
+}

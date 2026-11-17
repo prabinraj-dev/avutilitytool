@@ -1,0 +1,133 @@
+{
+  "id": "benq",
+  "name": "BenQ projector / display",
+  "protocol": "tcp",
+  "note": "BenQ commands in the form *command#. The serial number is not available over this protocol. Some models only answer while powered on.",
+  "commands": {
+    "powerOn": {
+      "label": "Power on",
+      "payload": "*pow=on#",
+      "encoding": "ascii",
+      "delimiter": "cr",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "powerOff": {
+      "label": "Power off",
+      "payload": "*pow=off#",
+      "encoding": "ascii",
+      "delimiter": "cr",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "volumeUp": {
+      "label": "",
+      "payload": "*vol=+#",
+      "encoding": "ascii",
+      "delimiter": "cr",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "volumeDown": {
+      "label": "",
+      "payload": "*vol=-#",
+      "encoding": "ascii",
+      "delimiter": "cr",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "mute": {
+      "label": "Mute on",
+      "payload": "*mute=on#",
+      "encoding": "ascii",
+      "delimiter": "cr",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "sources": [
+      {
+        "label": "HDMI 1",
+        "payload": "*sour=hdmi#",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "HDMI 2",
+        "payload": "*sour=hdmi2#",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Computer / VGA",
+        "payload": "*sour=rgb#",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Video",
+        "payload": "*sour=vid#",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ],
+    "custom": [
+      {
+        "label": "Mute off",
+        "payload": "*mute=off#",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Blank on",
+        "payload": "*blank=on#",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Blank off",
+        "payload": "*blank=off#",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Power status?",
+        "payload": "*pow=?#",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Lamp hours?",
+        "payload": "*ltim=?#",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Model name?",
+        "payload": "*modelname=?#",
+        "encoding": "ascii",
+        "delimiter": "cr",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ]
+  },
+  "models": {}
+}

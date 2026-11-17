@@ -41,13 +41,5 @@ module.exports = {
     } finally { s.close(); }
   },
 
-  commands: {
-    note: 'Panasonic NTCONTROL commands. They work from buttons only when command control runs without protection (set "Command protect" to off on the projector); the serial number is not available over this protocol.',
-    powerOn: cmd('Power on', '00PON'),
-    powerOff: cmd('Power off', '00POF'),
-    mute: cmd('Shutter / AV mute on', '00OSH:1'),
-    sources: Object.entries({ HD1: 'HDMI 1', HD2: 'HDMI 2', RG1: 'RGB 1', DVI: 'DVI', DL1: 'Digital Link' }).map(([code, label]) => cmd(label, `00IIS:${code}`)),
-    custom: [cmd('Shutter / AV mute off', '00OSH:0'), cmd('Power status?', '00QPW'), cmd('Input status?', '00QIN'), cmd('Volume up', '00AUU'), cmd('Volume down', '00AUD')],
-  },
   INPUTS,
 };

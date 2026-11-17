@@ -44,7 +44,4 @@ module.exports = {
     } finally { s.close(); }
   },
 
-  commands: {
-    note: 'Crestron control commands come from the program loaded on the processor, so there is no standard list. Enter the strings your program expects.',
-  },
 };

@@ -37,14 +37,4 @@ module.exports = {
     } finally { s.close(); }
   },
 
-  commands: {
-    note: 'BenQ commands in the form *command#. The serial number is not available over this protocol. Some models only answer while powered on.',
-    powerOn: button('Power on', 'pow=on'),
-    powerOff: button('Power off', 'pow=off'),
-    mute: button('Mute on', 'mute=on'),
-    volumeUp: button('', 'vol=+'),
-    volumeDown: button('', 'vol=-'),
-    sources: [button('HDMI 1', 'sour=hdmi'), button('HDMI 2', 'sour=hdmi2'), button('Computer / VGA', 'sour=rgb'), button('Video', 'sour=vid')],
-    custom: [button('Mute off', 'mute=off'), button('Blank on', 'blank=on'), button('Blank off', 'blank=off'), button('Power status?', 'pow=?'), button('Lamp hours?', 'ltim=?'), button('Model name?', 'modelname=?')],
-  },
 };

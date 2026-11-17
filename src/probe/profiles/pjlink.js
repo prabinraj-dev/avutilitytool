@@ -43,14 +43,4 @@ module.exports = {
     } finally { s.close(); }
   },
 
-  commands: {
-    note: 'Standard PJLink commands. If the projector has a PJLink password, turn PJLink authentication off on the projector for these buttons to work.',
-    powerOn: cmd('Power on', '%1POWR 1'),
-    powerOff: cmd('Power off', '%1POWR 0'),
-    mute: cmd('AV mute on', '%1AVMT 31'),
-    volumeUp: cmd('', '%2SVOL 1'),
-    volumeDown: cmd('', '%2SVOL 0'),
-    sources: [cmd('HDMI 1', '%1INPT 31'), cmd('HDMI 2', '%1INPT 32'), cmd('RGB 1', '%1INPT 11'), cmd('Video 1', '%1INPT 21'), cmd('Network', '%1INPT 51')],
-    custom: [cmd('AV mute off', '%1AVMT 30'), cmd('Power status?', '%1POWR ?'), cmd('Input status?', '%1INPT ?'), cmd('Lamp hours?', '%1LAMP ?'), cmd('Error status?', '%1ERST ?')],
-  },
 };

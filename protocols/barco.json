@@ -1,0 +1,101 @@
+{
+  "id": "barco",
+  "name": "Barco projector (Pulse)",
+  "protocol": "tcp",
+  "note": "Barco Pulse JSON-RPC commands. Source names differ between models; read the list with the \"Available sources?\" button and adjust.",
+  "commands": {
+    "powerOn": {
+      "label": "Power on",
+      "payload": "{\"jsonrpc\":\"2.0\",\"method\":\"system.poweron\",\"id\":1}",
+      "encoding": "utf8",
+      "delimiter": "none",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "powerOff": {
+      "label": "Power off",
+      "payload": "{\"jsonrpc\":\"2.0\",\"method\":\"system.poweroff\",\"id\":1}",
+      "encoding": "utf8",
+      "delimiter": "none",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "mute": {
+      "label": "Shutter close",
+      "payload": "{\"jsonrpc\":\"2.0\",\"method\":\"property.set\",\"params\":{\"property\":\"optics.shutter.target\",\"value\":\"Closed\"},\"id\":1}",
+      "encoding": "utf8",
+      "delimiter": "none",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "sources": [
+      {
+        "label": "HDMI",
+        "payload": "{\"jsonrpc\":\"2.0\",\"method\":\"property.set\",\"params\":{\"property\":\"image.window.main.source\",\"value\":\"HDMI\"},\"id\":1}",
+        "encoding": "utf8",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "DisplayPort",
+        "payload": "{\"jsonrpc\":\"2.0\",\"method\":\"property.set\",\"params\":{\"property\":\"image.window.main.source\",\"value\":\"DisplayPort\"},\"id\":1}",
+        "encoding": "utf8",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "HDBaseT",
+        "payload": "{\"jsonrpc\":\"2.0\",\"method\":\"property.set\",\"params\":{\"property\":\"image.window.main.source\",\"value\":\"HDBaseT\"},\"id\":1}",
+        "encoding": "utf8",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "SDI",
+        "payload": "{\"jsonrpc\":\"2.0\",\"method\":\"property.set\",\"params\":{\"property\":\"image.window.main.source\",\"value\":\"SDI\"},\"id\":1}",
+        "encoding": "utf8",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ],
+    "custom": [
+      {
+        "label": "Shutter open",
+        "payload": "{\"jsonrpc\":\"2.0\",\"method\":\"property.set\",\"params\":{\"property\":\"optics.shutter.target\",\"value\":\"Open\"},\"id\":1}",
+        "encoding": "utf8",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Projector state?",
+        "payload": "{\"jsonrpc\":\"2.0\",\"method\":\"property.get\",\"params\":{\"property\":\"system.state\"},\"id\":1}",
+        "encoding": "utf8",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Available sources?",
+        "payload": "{\"jsonrpc\":\"2.0\",\"method\":\"image.source.list\",\"id\":1}",
+        "encoding": "utf8",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Serial number?",
+        "payload": "{\"jsonrpc\":\"2.0\",\"method\":\"property.get\",\"params\":{\"property\":\"system.serialnumber\"},\"id\":1}",
+        "encoding": "utf8",
+        "delimiter": "none",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ]
+  },
+  "models": {}
+}

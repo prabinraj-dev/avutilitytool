@@ -1,0 +1,85 @@
+{
+  "id": "lightware",
+  "name": "Lightware (LW3)",
+  "protocol": "tcp",
+  "note": "LW3 commands for Lightware switchers and matrices. Input and output names (I1, O1) and paths differ between models, so check them against your model’s manual.",
+  "commands": {
+    "mute": {
+      "label": "Mute output 1",
+      "payload": "CALL /MEDIA/VIDEO/XP:muteDestination(O1)",
+      "encoding": "ascii",
+      "delimiter": "crlf",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "sources": [
+      {
+        "label": "Input 1 to output 1",
+        "payload": "CALL /MEDIA/VIDEO/XP:switch(I1:O1)",
+        "encoding": "ascii",
+        "delimiter": "crlf",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Input 2 to output 1",
+        "payload": "CALL /MEDIA/VIDEO/XP:switch(I2:O1)",
+        "encoding": "ascii",
+        "delimiter": "crlf",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Input 3 to output 1",
+        "payload": "CALL /MEDIA/VIDEO/XP:switch(I3:O1)",
+        "encoding": "ascii",
+        "delimiter": "crlf",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Input 4 to output 1",
+        "payload": "CALL /MEDIA/VIDEO/XP:switch(I4:O1)",
+        "encoding": "ascii",
+        "delimiter": "crlf",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ],
+    "custom": [
+      {
+        "label": "Unmute output 1",
+        "payload": "CALL /MEDIA/VIDEO/XP:unmuteDestination(O1)",
+        "encoding": "ascii",
+        "delimiter": "crlf",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Current routing?",
+        "payload": "GET /MEDIA/VIDEO/XP.DestinationConnectionList",
+        "encoding": "ascii",
+        "delimiter": "crlf",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Product name?",
+        "payload": "GET /.ProductName",
+        "encoding": "ascii",
+        "delimiter": "crlf",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Serial number?",
+        "payload": "GET /.SerialNumber",
+        "encoding": "ascii",
+        "delimiter": "crlf",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ]
+  },
+  "models": {}
+}

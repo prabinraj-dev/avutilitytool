@@ -1,0 +1,101 @@
+{
+  "id": "sony",
+  "name": "Sony BRAVIA display (Simple IP Control)",
+  "protocol": "tcp",
+  "note": "Sony BRAVIA Simple IP Control. Turn on \"Simple IP control\" in the display’s network settings (and \"Remote start\" for power on).",
+  "commands": {
+    "powerOn": {
+      "label": "Power on",
+      "payload": "*SCPOWR0000000000000001",
+      "encoding": "ascii",
+      "delimiter": "lf",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "powerOff": {
+      "label": "Power off",
+      "payload": "*SCPOWR0000000000000000",
+      "encoding": "ascii",
+      "delimiter": "lf",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "mute": {
+      "label": "Mute on",
+      "payload": "*SCAMUT0000000000000001",
+      "encoding": "ascii",
+      "delimiter": "lf",
+      "delimiterCustom": "",
+      "delimiterEncoding": "text"
+    },
+    "sources": [
+      {
+        "label": "HDMI 1",
+        "payload": "*SCINPT0000000100000001",
+        "encoding": "ascii",
+        "delimiter": "lf",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "HDMI 2",
+        "payload": "*SCINPT0000000100000002",
+        "encoding": "ascii",
+        "delimiter": "lf",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "HDMI 3",
+        "payload": "*SCINPT0000000100000003",
+        "encoding": "ascii",
+        "delimiter": "lf",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "HDMI 4",
+        "payload": "*SCINPT0000000100000004",
+        "encoding": "ascii",
+        "delimiter": "lf",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ],
+    "custom": [
+      {
+        "label": "Mute off",
+        "payload": "*SCAMUT0000000000000000",
+        "encoding": "ascii",
+        "delimiter": "lf",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Volume 20",
+        "payload": "*SCVOLU0000000000000020",
+        "encoding": "ascii",
+        "delimiter": "lf",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Volume 40",
+        "payload": "*SCVOLU0000000000000040",
+        "encoding": "ascii",
+        "delimiter": "lf",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      },
+      {
+        "label": "Power status?",
+        "payload": "*SEPOWR################",
+        "encoding": "ascii",
+        "delimiter": "lf",
+        "delimiterCustom": "",
+        "delimiterEncoding": "text"
+      }
+    ]
+  },
+  "models": {}
+}
