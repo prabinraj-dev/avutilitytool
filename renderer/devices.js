@@ -83,9 +83,12 @@
     const portsText = scan.usedDefaultPorts
       ? `${scan.portsUsed.length} common AV ports`
       : `${scan.portsUsed.length} port${scan.portsUsed.length === 1 ? '' : 's'}`;
-    summary.textContent = `${scan.cancelled ? 'Stopped early \u2014 ' : ''}Found ${n} device${n === 1 ? '' : 's'} \u00B7 checked ${scan.scannedHosts} of ${scan.totalHosts} addresses \u00B7 ${portsText}`;
+    summary.textContent = scan.live
+      ? `Found ${n} device${n === 1 ? '' : 's'} so far\u2026`
+      : `${scan.cancelled ? 'Stopped early \u2014 ' : ''}Found ${n} device${n === 1 ? '' : 's'} \u00B7 checked ${scan.scannedHosts} of ${scan.totalHosts} addresses \u00B7 ${portsText}`;
     summary.classList.remove('hidden');
 
+    if (!n && scan.live) { list.innerHTML = ''; return; }
     if (!n) {
       list.innerHTML = '<li class="scan-empty">Nothing answered. A device that blocks ping and uses a port outside the list won\u2019t show up \u2014 try entering its port above, or add it manually.</li>';
       return;
@@ -165,6 +168,21 @@
       $('progressFill').style.width = `${total ? Math.round((scanned / total) * 100) : 0}%`;
       $('progressLabel').textContent = `Scanned ${scanned} / ${total} addresses \u00B7 ${found} found`;
     });
+    // Devices appear in the list as soon as they answer, not only when the sweep ends.
+    const live = new Map();
+    let drawQueued = false;
+    const unsubscribeFound = window.api.discovery.onFound((r) => {
+      live.set(r.ip, r);
+      if (drawQueued) return;
+      drawQueued = true;
+      requestAnimationFrame(() => {
+        drawQueued = false;
+        if (!scanning) return;
+        const results = [...live.values()].sort((a, b) => a.ip.split('.').reduce((x, o) => x * 256 + Number(o), 0) - b.ip.split('.').reduce((x, o) => x * 256 + Number(o), 0));
+        lastScan = { results, live: true, portsUsed: [], scannedHosts: 0, totalHosts: 0 };
+        renderScanResults(lastScan);
+      });
+    });
 
     try {
       lastScan = await window.api.discovery.scan({ target, ports: form.elements.ports.value });
@@ -174,6 +192,7 @@
       $('scanResults').innerHTML = `<li class="scan-empty">${esc(cleanError(err))}</li>`;
     } finally {
       unsubscribe();
+      unsubscribeFound();
       setScanning(false);
     }
   }

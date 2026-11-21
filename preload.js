@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('api', {
     cancel: () => ipcRenderer.invoke('discovery:cancel'),
     localNetworks: () => ipcRenderer.invoke('discovery:localNetworks'),
     onProgress: subscribe('discovery:progress'),
+    onFound: subscribe('discovery:found'),
   },
   heartbeat: {
     start: () => ipcRenderer.invoke('heartbeat:start'),

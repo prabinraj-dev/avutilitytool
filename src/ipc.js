@@ -77,6 +77,7 @@ function registerIpcHandlers({
         ports,
         shouldCancel: () => token.cancelled,
         onProgress: (progress) => send('discovery:progress', progress),
+        onFound: (result) => send('discovery:found', result),
       });
     } finally {
       activeScan = null;

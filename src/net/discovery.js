@@ -133,8 +133,23 @@ async function runPool(items, worker, concurrency, shouldCancel) {
   await Promise.all(Array.from({ length: Math.min(concurrency, items.length) || 1 }, next));
 }
 
-async function probePorts(ip, ports, timeoutMs) {
-  const results = await Promise.all(ports.map(async (port) => ((await probeTcp({ ip, port, timeoutMs })) ? port : null)));
+// Caps how many things run at once (open sockets, ping processes) so a big sweep
+// stays fast without flooding the PC's network stack or firewall.
+function limiter(max) {
+  let active = 0;
+  const queue = [];
+  const next = () => {
+    if (active >= max || !queue.length) return;
+    active += 1;
+    const { fn, resolve } = queue.shift();
+    Promise.resolve().then(fn).then(resolve, () => resolve(null)).finally(() => { active -= 1; next(); });
+  };
+  return (fn) => new Promise((resolve) => { queue.push({ fn, resolve }); next(); });
+}
+
+async function probePorts(ip, ports, timeoutMs, limit) {
+  const run = limit || ((fn) => fn());
+  const results = await Promise.all(ports.map((port) => run(async () => ((await probeTcp({ ip, port, timeoutMs })) ? port : null))));
   return results.filter((p) => p !== null);
 }
 
@@ -155,42 +170,46 @@ async function reverseLookup(ip) {
 // but expose a control port are still found, and devices that answer ping
 // but use an unlisted port still show up as "responds to ping".
 async function scanRange({
-  target, ports, timeoutMs = 400, concurrency = 24, onProgress, shouldCancel = () => false,
+  target, ports, timeoutMs = 400, concurrency = 128, maxSockets = 2048, maxPings = 64, onProgress, onFound, shouldCancel = () => false,
 }) {
   const ips = parseTarget(target);
   const customPorts = parsePorts(ports);
   const portList = customPorts || DEFAULT_PORTS;
+  const sockets = limiter(maxSockets);
+  const pings = limiter(maxPings);
 
   let scanned = 0;
   const found = [];
+  const lookups = [];
 
   await runPool(ips, async (ip) => {
     const [alive, open] = await Promise.all([
-      pingHost(ip, 800),
-      probePorts(ip, portList, timeoutMs),
+      pings(() => pingHost(ip, 500)),
+      probePorts(ip, portList, timeoutMs, sockets),
     ]);
     if (alive || open.length) {
-      found.push({
+      const entry = {
         ip,
-        alive,
+        alive: !!alive,
         openPorts: open.map((port) => ({ port, service: SERVICE_NAMES[port] || '' })),
-      });
+        mac: '',
+        hostname: '',
+      };
+      found.push(entry);
+      if (onFound) onFound(entry); // show it right away; the name follows when it is known
+      lookups.push(reverseLookup(ip).then((name) => {
+        entry.hostname = name || '';
+        if (name && onFound) onFound(entry);
+      }));
     }
     scanned += 1;
     if (onProgress) onProgress({ scanned, total: ips.length, found: found.length });
   }, concurrency, shouldCancel);
 
-  // Enrich what we found: MAC (from the ARP cache the sweep just warmed up)
-  // and hostname (reverse DNS, with a short timeout).
+  // MAC addresses come from the ARP cache the sweep just warmed up.
   if (found.length) {
-    const [arp, names] = await Promise.all([
-      readArpTable(),
-      Promise.all(found.map((f) => reverseLookup(f.ip))),
-    ]);
-    found.forEach((f, i) => {
-      f.mac = arp[f.ip] || '';
-      f.hostname = names[i] || '';
-    });
+    const [arp] = await Promise.all([readArpTable(), Promise.all(lookups)]);
+    found.forEach((f) => { f.mac = arp[f.ip] || ''; });
   }
 
   found.sort((a, b) => ipToInt(a.ip) - ipToInt(b.ip));
