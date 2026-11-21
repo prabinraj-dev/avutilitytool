@@ -309,6 +309,25 @@ textarea { resize: vertical; font-family: var(--mono); }
 .details-offline { margin: 10px 0 0; padding: 10px 12px; border: 1px solid var(--status-unresponsive); border-radius: var(--radius); font-size: 13px; }
 .details-busy { color: var(--text-dim); font-size: 13px; padding: 18px 0; }
 
+/* custom button colours (Control page) */
+#tab-control .btn.has-color, .btn.color-preview.has-color {
+  background: var(--btn-color); border-color: var(--btn-color); color: var(--btn-text);
+}
+#tab-control .btn.has-color:hover:not(:disabled) { filter: brightness(1.12); border-color: var(--btn-color); }
+#tab-control .btn.has-color.is-unmapped { border-style: dashed; border-color: var(--btn-text); opacity: 0.85; }
+#tab-control .btn.has-color:disabled { opacity: 0.55; }
+.color-field { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 12px; }
+.color-label { font-size: 12.5px; color: var(--text-dim); }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; padding: 0; }
+.swatch-default { background: linear-gradient(135deg, var(--panel-alt) 50%, var(--panel) 50%); }
+.swatch[aria-pressed="true"] { outline: 2px solid var(--text); outline-offset: 2px; }
+.swatch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.swatch-custom { flex-direction: row; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-dim); cursor: pointer; }
+.swatch-custom input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); background: none; cursor: pointer; }
+.color-preview-row { display: flex; align-items: center; gap: 12px; }
+.color-preview { min-width: 140px; pointer-events: none; }
+
 /* ---------- discovery ---------- */
 .scan-progress { display: flex; align-items: center; gap: 12px; margin-top: 14px; font-size: 12.5px; color: var(--text-dim); }
 .progress-track { flex: 1; height: 6px; background: var(--panel-alt); border-radius: 999px; overflow: hidden; }
