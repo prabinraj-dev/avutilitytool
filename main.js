@@ -7,7 +7,7 @@ const { HeartbeatManager } = require('./src/net/heartbeat');
 const { UpdateManager } = require('./src/updater');
 const { registerIpcHandlers } = require('./src/ipc');
 
-const THEME_BG = { dark: '#0d1423', light: '#f2f6fd' };
+const THEME_BG = { dark: '#000000', light: '#f2f6fd' };
 // Allow camera / microphone / speaker-selection for the Device Test tab.
 const ALLOWED_PERMISSIONS = new Set(['media', 'audioCapture', 'videoCapture', 'speaker-selection']);
 

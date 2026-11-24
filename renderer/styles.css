@@ -645,3 +645,189 @@ button.chip:disabled { opacity: 0.5; cursor: default; }
 .label-line .optional { margin-left: 0; }
 .control-grid .panel { margin-bottom: 0; }
 .set-card .panel-title { margin: 0; }
+
+/* =====================================================================
+   Dark mode: iOS-style look — deep black, frosted glass panels, rounded
+   corners and glossy buttons. Light mode is untouched.
+   ===================================================================== */
+:root:not([data-theme="light"]) {
+  --bg: #000000;
+  --panel: rgba(28, 28, 30, 0.78);
+  --panel-alt: rgba(118, 118, 128, 0.20);
+  --border: rgba(255, 255, 255, 0.09);
+  --text: #f5f5f7;
+  --text-dim: #98989f;
+  --accent: #0a84ff;
+  --accent-text: #64aaff;
+  --accent-dim: rgba(10, 132, 255, 0.20);
+  --on-accent: #ffffff;
+  --on-online: #ffffff;
+  --sidebar-bg: rgba(18, 18, 20, 0.72);
+  --log-bg: rgba(0, 0, 0, 0.55);
+  --log-in: #64d2ff;
+  --backdrop: rgba(0, 0, 0, 0.55);
+  --status-online: #64d2ff;
+  --status-unresponsive: #ff9f0a;
+  --status-offline: #ff453a;
+  --status-unknown: #636366;
+  --danger: #ff453a;
+  --radius: 12px;
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* glossy surface recipe */
+  --gloss: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.07) 48%, rgba(255, 255, 255, 0) 52%, rgba(0, 0, 0, 0.10) 100%);
+  --gloss-soft: linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.03) 50%, rgba(0, 0, 0, 0.12) 100%);
+  --lift: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -1px 0 rgba(0, 0, 0, 0.25), 0 4px 14px rgba(0, 0, 0, 0.45);
+  --lift-soft: inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+:root:not([data-theme="light"]) body {
+  background:
+    radial-gradient(900px 520px at 12% -8%, rgba(10, 132, 255, 0.22), transparent 60%),
+    radial-gradient(700px 480px at 100% 110%, rgba(94, 92, 230, 0.16), transparent 60%),
+    #000;
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* frosted glass surfaces */
+:root:not([data-theme="light"]) .sidebar {
+  backdrop-filter: blur(24px) saturate(160%);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+:root:not([data-theme="light"]) .panel {
+  backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+:root:not([data-theme="light"]) .modal {
+  background: rgba(36, 36, 40, 0.86);
+  backdrop-filter: blur(30px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 20px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+:root:not([data-theme="light"]) .modal-backdrop { backdrop-filter: blur(6px); }
+:root:not([data-theme="light"]) .tab-header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+
+/* sidebar navigation: rounded pills, glossy blue when selected */
+:root:not([data-theme="light"]) .nav { gap: 4px; }
+:root:not([data-theme="light"]) .nav-item {
+  border-left: 0; border-radius: 10px; padding: 10px 14px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+:root:not([data-theme="light"]) .nav-item:hover { background: rgba(118, 118, 128, 0.18); }
+:root:not([data-theme="light"]) .nav-item.active {
+  color: #fff;
+  background: var(--gloss), linear-gradient(180deg, #2f95ff, #0a6ae0);
+  box-shadow: var(--lift);
+}
+
+/* inputs: iOS fill style */
+:root:not([data-theme="light"]) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+:root:not([data-theme="light"]) select,
+:root:not([data-theme="light"]) textarea {
+  background: rgba(118, 118, 128, 0.22);
+  border: 1px solid transparent;
+  border-radius: 10px;
+}
+:root:not([data-theme="light"]) input:focus, :root:not([data-theme="light"]) select:focus, :root:not([data-theme="light"]) textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.30);
+}
+:root:not([data-theme="light"]) select option { background: #1c1c1e; }
+:root:not([data-theme="light"]) input[type="checkbox"], :root:not([data-theme="light"]) input[type="range"] { accent-color: var(--accent); }
+
+/* ---------- glossy buttons ---------- */
+:root:not([data-theme="light"]) .btn {
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px;
+  background: var(--gloss-soft), #2c2c2e;
+  box-shadow: var(--lift-soft);
+  transition: transform 0.08s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+:root:not([data-theme="light"]) .btn:hover:not(:disabled) { filter: brightness(1.12); border-color: rgba(255, 255, 255, 0.16); }
+:root:not([data-theme="light"]) .btn:active:not(:disabled) { transform: scale(0.97); filter: brightness(0.95); }
+:root:not([data-theme="light"]) .btn:disabled { box-shadow: none; }
+
+:root:not([data-theme="light"]) .btn-primary {
+  color: #fff; border-color: rgba(255, 255, 255, 0.14);
+  background: var(--gloss), linear-gradient(180deg, #2f95ff 0%, #0a6ae0 100%);
+  box-shadow: var(--lift);
+}
+:root:not([data-theme="light"]) .btn-secondary { background: var(--gloss-soft), #3a3a3c; }
+:root:not([data-theme="light"]) .btn-ghost { background: transparent; border-color: transparent; box-shadow: none; color: var(--accent-text); }
+:root:not([data-theme="light"]) .btn-ghost:hover:not(:disabled) { background: rgba(118, 118, 128, 0.18); filter: none; }
+
+/* control page tiles */
+:root:not([data-theme="light"]) .btn-source,
+:root:not([data-theme="light"]) .btn-toggle {
+  background: var(--gloss), linear-gradient(180deg, #3a3a3e 0%, #232326 100%);
+  border-radius: 16px;
+  box-shadow: var(--lift);
+  font-weight: 600;
+}
+:root:not([data-theme="light"]) .btn-round {
+  background: var(--gloss), linear-gradient(180deg, #48484c 0%, #2a2a2d 100%);
+  box-shadow: var(--lift);
+  width: 44px; height: 44px;
+}
+:root:not([data-theme="light"]) .btn-power { border-radius: 16px; color: #fff; }
+:root:not([data-theme="light"]) .btn-power-on {
+  background: var(--gloss), linear-gradient(180deg, #34a8ff 0%, #0a6ae0 100%);
+  border-color: rgba(255, 255, 255, 0.14); box-shadow: var(--lift);
+}
+:root:not([data-theme="light"]) .btn-power-off {
+  background: var(--gloss), linear-gradient(180deg, #ff6a5f 0%, #d9302a 100%);
+  border-color: rgba(255, 255, 255, 0.14); box-shadow: var(--lift);
+}
+:root:not([data-theme="light"]) .btn-power-on:hover:not(:disabled),
+:root:not([data-theme="light"]) .btn-power-off:hover:not(:disabled) { color: #fff; }
+:root:not([data-theme="light"]) .is-unmapped { border-style: dashed; border-color: rgba(255, 255, 255, 0.28); }
+:root:not([data-theme="light"]) .btn-add { background: transparent; box-shadow: none; border-style: dashed; color: var(--text-dim); }
+
+/* user-chosen button colours get the same gloss */
+:root:not([data-theme="light"]) #tab-control .btn.has-color,
+:root:not([data-theme="light"]) .btn.color-preview.has-color {
+  background: var(--gloss), var(--btn-color);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: var(--lift);
+}
+:root:not([data-theme="light"]) #tab-control .btn.has-color.is-unmapped { border-color: rgba(255, 255, 255, 0.45); }
+
+/* iOS segmented control */
+:root:not([data-theme="light"]) .segmented {
+  background: rgba(118, 118, 128, 0.24); border: 0; border-radius: 10px; padding: 2px; gap: 2px;
+}
+:root:not([data-theme="light"]) .seg-btn { border: 0 !important; border-radius: 8px; background: transparent; }
+:root:not([data-theme="light"]) .seg-btn[aria-pressed="true"] {
+  color: #fff;
+  background: var(--gloss-soft), #636366;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+/* pills, chips, lists */
+:root:not([data-theme="light"]) .badge { background: rgba(118, 118, 128, 0.18); border-color: transparent; }
+:root:not([data-theme="light"]) .badge-ok { background: rgba(100, 210, 255, 0.14); }
+:root:not([data-theme="light"]) .badge-warn { background: rgba(255, 159, 10, 0.14); }
+:root:not([data-theme="light"]) .badge-error { background: rgba(255, 69, 58, 0.14); }
+:root:not([data-theme="light"]) .chip, :root:not([data-theme="light"]) .count-pill {
+  background: rgba(118, 118, 128, 0.22); border-color: transparent;
+}
+:root:not([data-theme="light"]) .update-chip {
+  color: #fff; border-color: transparent;
+  background: var(--gloss), linear-gradient(180deg, #2f95ff, #0a6ae0); box-shadow: var(--lift-soft);
+}
+:root:not([data-theme="light"]) .scan-result-item { background: rgba(118, 118, 128, 0.14); border-color: transparent; border-radius: 14px; }
+:root:not([data-theme="light"]) .console-log { border-radius: 14px; border-color: rgba(255, 255, 255, 0.06); }
+:root:not([data-theme="light"]) .control-feedback { border-radius: 14px; backdrop-filter: blur(20px); }
+:root:not([data-theme="light"]) .progress-track { background: rgba(118, 118, 128, 0.24); }
+:root:not([data-theme="light"]) .progress-fill { background: linear-gradient(90deg, #0a84ff, #64d2ff); }
+:root:not([data-theme="light"]) .device-table th { border-bottom-color: rgba(255, 255, 255, 0.08); }
+:root:not([data-theme="light"]) .device-table td { border-bottom-color: rgba(255, 255, 255, 0.05); }
+
+/* thin dark scrollbars */
+:root:not([data-theme="light"]) ::-webkit-scrollbar { width: 10px; height: 10px; }
+:root:not([data-theme="light"]) ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.16); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+:root:not([data-theme="light"]) ::-webkit-scrollbar-track { background: transparent; }
